@@ -1,0 +1,5 @@
+defaults:
+  - tasks/train  # 기본 작업
+  - modules/data_loader
+  - modules/model
+  - modules/wandb

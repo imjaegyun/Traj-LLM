@@ -1,23 +1,23 @@
 import hydra
 from omegaconf import DictConfig
-from train.train_model import main as train_model
-from train.evaluate_model import main as evaluate_model
-from train.hyperparam_tuning import main as hyperparam_tuning
+from train.train_model import  train_main
+from train.evaluate_model import main as evaluate_main
+from train.hyperparam_tuning import main as tuning_main
 
-@hydra.main(config_path="configs", config_name="traj_llm")
+@hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
 def main(config: DictConfig):
     # Select task based on config
     task = config.task
 
     if task == "train":
         print("Starting training...")
-        train_model(config)
+        train_main(config)  # train_main에 DictConfig 전달
     elif task == "evaluate":
         print("Starting evaluation...")
-        evaluate_model(config)
+        evaluate_main(config)
     elif task == "tune":
         print("Starting hyperparameter tuning...")
-        hyperparam_tuning(config)
+        tuning_main(config)
     else:
         raise ValueError(f"Unknown task: {task}. Choose from ['train', 'evaluate', 'tune'].")
 

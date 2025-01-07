@@ -1,0 +1,12 @@
+torch>=1.9.0
+torchvision
+pytorch-lightning>=1.5.0
+wandb
+hydra-core>=1.1.0
+omegaconf
+nuscenes-devkit
+optuna
+transformers
+numpy
+pandas
+matplotlib

@@ -22,10 +22,10 @@ def evaluate_model(config: DictConfig):
     results = trainer.test(model, test_loader)
     return results
 
+@hydra.main(config_path="configs", config_name="traj_llm")
+def main(config: DictConfig):
+    results = evaluate_model(config)
+    print("Evaluation Results:", results)
+    
 if __name__ == "__main__":
-    @hydra.main(config_path="configs", config_name="traj_llm")
-    def main(config: DictConfig):
-        results = evaluate_model(config)
-        print("Evaluation Results:", results)
-
     main()

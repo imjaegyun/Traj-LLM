@@ -9,6 +9,8 @@ from models.high_level_interaction_model import HighLevelInteractionModel
 from models.lane_aware_probability_learning import LaneAwareProbabilityLearning
 from models.multimodal_laplace_decoder import MultimodalLaplaceDecoder
 from data.nuscenes_data_loader import NuscenesDataset
+import hydra
+from omegaconf import DictConfig
 
 class TrajLLM(pl.LightningModule):
     def __init__(self, config):
@@ -19,10 +21,10 @@ class TrajLLM(pl.LightningModule):
 
         # Sparse Context Encoding
         self.sparse_encoder = SparseContextEncoder(
-            input_dim=config.sparse_encoder.input_dim,
-            hidden_dim=config.sparse_encoder.hidden_dim,
-            output_dim=config.sparse_encoder.output_dim
-        )
+        input_dim=config.modules.sparse_encoder.input_dim,
+        hidden_dim=config.modules.sparse_encoder.hidden_dim,
+        output_dim=config.modules.sparse_encoder.output_dim
+    )
 
         # High-level Interaction Modeling
         self.high_level_model = HighLevelInteractionModel(
@@ -101,35 +103,34 @@ class TrajLLM(pl.LightningModule):
 
         return total_loss
 
-# Example usage with Hydra, Wandb, and DataLoader
+def train_main(config: DictConfig):
+    # Initialize Wandb Logger
+    wandb_logger = WandbLogger(project="Traj-LLM", config=config)
+
+    # Model initialization
+    model = TrajLLM(config)
+
+    # Nuscenes DataLoader setup
+    nuscenes_path = config.data.nuscenes_path
+    train_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-mini", split="train")
+    val_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-mini", split="val")
+
+    train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=config.train.batch_size, shuffle=False, num_workers=4)
+
+    # Trainer initialization
+    trainer = pl.Trainer(
+        max_epochs=config.train.epochs,
+        gpus=config.train.gpus,
+        logger=wandb_logger
+    )
+
+    # Start training
+    trainer.fit(model, train_loader, val_loader)
+
+@hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
+def main(config: DictConfig):
+    train_main(config)
+# Standalone execution
 if __name__ == "__main__":
-    import hydra
-    from omegaconf import DictConfig
-
-    @hydra.main(config_path="configs", config_name="traj_llm")
-    def main(config: DictConfig):
-        # Initialize Wandb Logger
-        wandb_logger = WandbLogger(project="Traj-LLM", config=config)
-
-        # Model initialization
-        model = TrajLLM(config)
-
-        # Nuscenes DataLoader setup
-        nuscenes_path = config.data.nuscenes_path
-        train_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-mini", split="train")
-        val_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-mini", split="val")
-
-        train_loader = DataLoader(train_dataset, batch_size=config.train.batch_size, shuffle=True, num_workers=4)
-        val_loader = DataLoader(val_dataset, batch_size=config.train.batch_size, shuffle=False, num_workers=4)
-
-        # Trainer initialization
-        trainer = pl.Trainer(
-            max_epochs=config.train.epochs,
-            gpus=config.train.gpus,
-            logger=wandb_logger
-        )
-
-        # Start training
-        trainer.fit(model, train_loader, val_loader)
-
     main()

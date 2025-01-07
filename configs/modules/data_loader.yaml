@@ -1,0 +1,3 @@
+data:
+  nuscenes_path: /home/user/data/Nuscenes
+  batch_size: 16

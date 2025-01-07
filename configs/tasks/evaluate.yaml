@@ -1,0 +1,9 @@
+task: evaluate
+
+evaluate:
+  checkpoint_path: "/home/user/Traj-LLM/imjaegyun/Traj-LLM/checkpoints/best.ckpt"
+  batch_size: 16
+  gpus: 1
+  metrics:  # Optional: 추가 평가 지표
+    - accuracy
+    - f1_score
