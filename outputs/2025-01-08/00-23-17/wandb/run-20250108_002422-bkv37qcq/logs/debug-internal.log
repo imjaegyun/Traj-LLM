@@ -1,0 +1,16 @@
+{"time":"2025-01-08T00:24:23.184422761+09:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-08T00:24:23.184439011+09:00","level":"INFO","msg":"created symlink","path":"wandb/run-20250108_002422-bkv37qcq/logs/debug-core.log"}
+{"time":"2025-01-08T00:24:23.289033839+09:00","level":"INFO","msg":"created new stream","id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:23.2890613+09:00","level":"INFO","msg":"stream: started","id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:23.289133861+09:00","level":"INFO","msg":"sender: started","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:23.289146141+09:00","level":"INFO","msg":"writer: Do: started","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:23.289213662+09:00","level":"INFO","msg":"handler: started","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:24.360639008+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T00:24:26.234099877+09:00","level":"INFO","msg":"stream: closing","id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:26.234132037+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-08T00:24:26.236165232+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-08T00:24:27.030251848+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-08T00:24:27.320797459+09:00","level":"INFO","msg":"handler: closed","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:27.320889111+09:00","level":"INFO","msg":"sender: closed","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:27.32083786+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":"bkv37qcq"}
+{"time":"2025-01-08T00:24:27.321010333+09:00","level":"INFO","msg":"stream: closed","id":"bkv37qcq"}

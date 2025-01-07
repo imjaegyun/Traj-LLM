@@ -1,4 +1,3 @@
 wandb:
   project: "Traj-LLM"
-  entity: "your_wandb_entity"
   mode: "online"  # Change to "offline" if needed

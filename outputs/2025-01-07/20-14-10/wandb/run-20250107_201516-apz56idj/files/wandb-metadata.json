@@ -1,0 +1,44 @@
+{
+  "os":  "Linux-6.8.0-49-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.9.21",
+  "startedAt":  "2025-01-07T11:15:17.549533Z",
+  "args":  [
+    "+task=train"
+  ],
+  "program":  "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py",
+  "codePath":  "train.py",
+  "git":  {
+    "remote":  "https://github.com/imjaegyun/Traj-LLM.git",
+    "commit":  "2072f6eddab4a1fa6f277eab5306e8ff40076f60"
+  },
+  "email":  "imij0522@gmail.com",
+  "root":  ".",
+  "host":  "workstation",
+  "executable":  "/home/user/anaconda3/envs/im_jg/bin/python",
+  "cpu_count":  64,
+  "cpu_count_logical":  128,
+  "gpu":  "NVIDIA GeForce RTX 4090",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "1967317549056",
+      "used":  "541278367744"
+    }
+  },
+  "memory":  {
+    "total":  "540624125952"
+  },
+  "cpu":  {
+    "count":  64,
+    "countLogical":  128
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  16384,
+      "architecture":  "Ada"
+    }
+  ],
+  "cudaVersion":  "12.6"
+}

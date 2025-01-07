@@ -1,54 +1,49 @@
+# models/high_level_interaction_model.py
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 from transformers import AutoModel, AutoTokenizer
+from peft import LoraConfig, get_peft_model
 
-class HighLevelInteractionModel(pl.LightningModule):
-    def __init__(self, llm_model_name, input_dim, hidden_dim, output_dim):
+class HighLevelInteractionModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
         super(HighLevelInteractionModel, self).__init__()
 
-        # Pre-trained LLM
-        self.llm = AutoModel.from_pretrained(llm_model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(llm_model_name)
+        # LLM-like Transformer
+        self.transformer_layer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=4),
+            num_layers=2
+        )
 
-        # Social Dot-product Attention
-        self.attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
+        # Input Projection
+        self.input_projection = nn.Linear(input_dim, hidden_dim)
 
         # Layer Normalization
         self.layer_norm = nn.LayerNorm(hidden_dim)
 
-        # MLP for final feature transformation
-        self.mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
-        )
+        # Output Projection
+        self.output_projection = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, inputs):
-        # Tokenize inputs for LLM
-        tokenized_inputs = self.tokenizer.batch_encode_plus(
-            inputs, return_tensors="pt", padding=True, truncation=True, max_length=512
-        )
+        # Project inputs
+        inputs = self.input_projection(inputs)
 
-        # Pass inputs through Pre-trained LLM
-        llm_outputs = self.llm(**tokenized_inputs).last_hidden_state
+        # Pass through Transformer
+        transformer_output = self.transformer_layer(inputs)
 
-        # Apply Social Dot-product Attention
-        attention_output, _ = self.attention(llm_outputs, llm_outputs, llm_outputs)
+        # Layer Normalization
+        normalized_output = self.layer_norm(transformer_output)
 
-        # Add & Normalize
-        attention_output = self.layer_norm(attention_output + llm_outputs)
-
-        # Pass through MLP
-        output = self.mlp(attention_output[:, -1, :])  # Take the last token representation
+        # Output Projection
+        output = self.output_projection(normalized_output)
 
         return output
+
 
 # Example usage
 if __name__ == "__main__":
     # Example input dimensions
     batch_size = 8
-    seq_len = 10
     input_dim = 16
     hidden_dim = 64
     output_dim = 128
@@ -61,7 +56,7 @@ if __name__ == "__main__":
     ] * (batch_size // 3)
 
     # Model initialization
-    model_name = "meta-llama/Llama-3.2"  # Replace with Llama 3.2 model name on Hugging Face
+    model_name = "meta-llama/Llama-3.2-3B"  # Replace with your model name on Hugging Face
     model = HighLevelInteractionModel(model_name, input_dim, hidden_dim, output_dim)
 
     # Forward pass

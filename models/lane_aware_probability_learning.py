@@ -1,60 +1,39 @@
+# models/lane_aware_probability_learning.py
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
+from models.mamba import MambaLayer
 
-class LaneAwareProbabilityLearning(pl.LightningModule):
+class LaneAwareProbabilityLearning(nn.Module):
     def __init__(self, agent_dim, lane_dim, hidden_dim, num_lanes):
         super(LaneAwareProbabilityLearning, self).__init__()
-
-        # Cross-attention layer for agent and lane interaction
-        self.cross_attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
-
-        # MLP for probability output (lane selection)
-        self.lane_probability_mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, num_lanes),  # Output probabilities for each lane
-            nn.Softmax(dim=-1)
-        )
-
-        # MLP for additional predictions (e.g., position, velocity, etc.)
-        self.lane_prediction_mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, 3)  # Predict x, y, and orientation for each lane
-        )
+        assert hidden_dim == 128, f"Expected hidden_dim=128, but got {hidden_dim}"  # 추가 디버깅
+        self.mamba_layer = MambaLayer(lane_dim, hidden_dim, num_blocks=4)
+        self.linear_in = nn.Linear(hidden_dim, hidden_dim)  # Ensure correct hidden_dim
+        self.linear_out = nn.Linear(hidden_dim, num_lanes)
 
     def forward(self, agent_features, lane_features):
-        # Cross-Attention between agent and lane features
-        attention_output, _ = self.cross_attention(agent_features, lane_features, lane_features)
+        print(f"Lane features before MambaLayer: {lane_features.shape}")
+        enhanced_lane_features = self.mamba_layer(lane_features)
+        print(f"Lane features after MambaLayer: {enhanced_lane_features.shape}")
 
-        # Generate probabilities for lane selection
-        lane_probabilities = self.lane_probability_mlp(attention_output[:, -1, :])  # Use the last token representation
+        batch_size, seq_length, hidden_dim = enhanced_lane_features.shape
+        assert hidden_dim == 128, f"Expected hidden_dim=128, but got {hidden_dim}"  # 추가 디버깅
+        enhanced_lane_features = enhanced_lane_features.reshape(-1, hidden_dim)
+        print(f"Lane features after flattening: {enhanced_lane_features.shape}")
 
-        # Generate additional predictions for each lane (position, orientation, etc.)
-        lane_predictions = self.lane_prediction_mlp(attention_output[:, -1, :])
+        enhanced_lane_features = self.linear_in(enhanced_lane_features)
+        print(f"Lane features after linear_in: {enhanced_lane_features.shape}")
 
-        return lane_probabilities, lane_predictions
+        enhanced_lane_features = enhanced_lane_features.reshape(batch_size, seq_length, -1)
+        print(f"Lane features reshaped back: {enhanced_lane_features.shape}")
 
-# Example usage
-if __name__ == "__main__":
-    # Example input dimensions based on Nuscenes data
-    batch_size = 8
-    seq_len_agent = 10
-    seq_len_lane = 15
-    agent_dim = 128  # e.g., encoded agent state dimensions from Nuscenes
-    lane_dim = 128   # e.g., encoded lane features from Nuscenes
-    hidden_dim = 256
-    num_lanes = 6    # Assume there are 6 lanes to choose from
+        lane_probabilities = self.linear_out(enhanced_lane_features)
+        print(f"Lane probabilities shape: {lane_probabilities.shape}")
 
-    # Random example inputs simulating Nuscenes data
-    agent_features = torch.randn(batch_size, seq_len_agent, agent_dim)
-    lane_features = torch.randn(batch_size, seq_len_lane, lane_dim)
+        return lane_probabilities, None
 
-    # Model initialization
-    model = LaneAwareProbabilityLearning(agent_dim, lane_dim, hidden_dim, num_lanes)
 
-    # Forward pass
-    lane_probabilities, lane_predictions = model(agent_features, lane_features)
-    print("Lane probabilities shape:", lane_probabilities.shape)
-    print("Lane predictions shape:", lane_predictions.shape)
+
+
+

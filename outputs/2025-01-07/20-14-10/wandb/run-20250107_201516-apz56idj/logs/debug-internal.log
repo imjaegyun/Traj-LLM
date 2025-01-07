@@ -1,0 +1,16 @@
+{"time":"2025-01-07T20:15:17.550973195+09:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-07T20:15:17.551000086+09:00","level":"INFO","msg":"created symlink","path":"wandb/run-20250107_201516-apz56idj/logs/debug-core.log"}
+{"time":"2025-01-07T20:15:17.65883253+09:00","level":"INFO","msg":"created new stream","id":"apz56idj"}
+{"time":"2025-01-07T20:15:17.658879971+09:00","level":"INFO","msg":"stream: started","id":"apz56idj"}
+{"time":"2025-01-07T20:15:17.658900771+09:00","level":"INFO","msg":"writer: Do: started","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:17.658984733+09:00","level":"INFO","msg":"handler: started","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:17.659004944+09:00","level":"INFO","msg":"sender: started","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:18.845982626+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-07T20:15:27.232089414+09:00","level":"INFO","msg":"stream: closing","id":"apz56idj"}
+{"time":"2025-01-07T20:15:27.232147155+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-07T20:15:27.232764211+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-07T20:15:28.149753849+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-07T20:15:28.429777515+09:00","level":"INFO","msg":"handler: closed","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:28.429825566+09:00","level":"INFO","msg":"sender: closed","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:28.429819846+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":"apz56idj"}
+{"time":"2025-01-07T20:15:28.429949859+09:00","level":"INFO","msg":"stream: closed","id":"apz56idj"}

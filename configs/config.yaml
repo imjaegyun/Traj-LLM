@@ -3,3 +3,9 @@ defaults:
   - modules/data_loader
   - modules/model
   - modules/wandb
+
+train:
+  lr: 0.001
+  epochs: 100
+  batch_size: 16
+  gpus: 1
