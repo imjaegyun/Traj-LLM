@@ -1,11 +1,20 @@
+# configs/config.yaml
 defaults:
   - tasks/train  # 기본 작업
+  #- tasks/test   # 테스트 작업 추가
   - modules/data_loader
   - modules/model
   - modules/wandb
 
 train:
   lr: 0.001
-  epochs: 100
+  epochs: 10
   batch_size: 16
   gpus: 1
+
+test:
+  batch_size: 16
+  gpus: 1
+  data_root: /home/user/data/Nuscenes
+  checkpoint: /home/user/Traj-LLM/imjaegyun/Traj-LLM/outputs/2025-01-08/01-58-51/Traj-LLM/2yau9l6p/checkpoints/epoch=99-step=4300.ckpt
+  output_file: predictions.json
