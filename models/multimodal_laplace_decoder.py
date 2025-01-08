@@ -1,73 +1,95 @@
-# models/multimodal_laplace_decoder.py
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class MultimodalLaplaceDecoder(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, num_modes=5):
         super(MultimodalLaplaceDecoder, self).__init__()
 
-        # Mean (mu) prediction
-        self.mu_layer = nn.Linear(input_dim, output_dim)
+        self.num_modes = num_modes
+        self.output_dim = output_dim
 
-        # Scale (b) prediction
+        # Mixing coefficients (\u03c0)
+        self.mixing_layer = nn.Linear(input_dim, num_modes)
+
+        # Mean (\u03bc) prediction for each mode
+        self.mu_layer = nn.Linear(input_dim, num_modes * output_dim)
+
+        # Scale (b) prediction for each mode
         self.b_layer = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Softplus()
+            nn.Linear(input_dim, num_modes * output_dim),
+            nn.Softplus()  # Ensure positivity
         )
 
-        # Laplace uncertainty estimation layers
-        self.laplace_uncertainty_layer = nn.Sequential(
-            nn.Linear(input_dim, 64),  # Hidden layer size
+        # Cross-attention layers
+        self.cross_attention = nn.MultiheadAttention(embed_dim=input_dim, num_heads=4, batch_first=True)
+
+        # Final uncertainty prediction
+        self.uncertainty_layer = nn.Sequential(
+            nn.Linear(input_dim, 64),
             nn.ReLU(),
-            nn.Linear(64, output_dim)  # Output matches mu and b
+            nn.Linear(64, num_modes * output_dim)
         )
 
-    def forward(self, features):
+    def forward(self, high_level_features, lane_probabilities):
         """
-        Forward pass to compute mu, b, and uncertainty.
+        Forward pass to compute \u03bc, b, \u03c0, and uncertainty.
         Args:
-            features: Input tensor of shape [batch_size, seq_len, input_dim]
+            high_level_features: Tensor of shape [batch_size, seq_len, input_dim]
+            lane_probabilities: Tensor of shape [batch_size, seq_len, input_dim]
         Returns:
-            mu: Mean prediction of shape [batch_size, seq_len, output_dim]
-            b: Scale prediction of shape [batch_size, seq_len, output_dim]
-            uncertainty: Uncertainty prediction of shape [batch_size, seq_len, output_dim]
+            pi: Mixing coefficients of shape [batch_size, seq_len, num_modes]
+            mu: Mean prediction of shape [batch_size, seq_len, num_modes, output_dim]
+            b: Scale prediction of shape [batch_size, seq_len, num_modes, output_dim]
+            uncertainty: Uncertainty prediction of shape [batch_size, seq_len, num_modes, output_dim]
         """
-        # Ensure features have expected shape
-        print(f"Input features shape: {features.shape}")
+        # Cross Attention between high-level features and lane probabilities
+        attn_output, _ = self.cross_attention(high_level_features, lane_probabilities, lane_probabilities)
 
-        mu = self.mu_layer(features)
-        b = self.b_layer(features)
-        uncertainty = self.laplace_uncertainty_layer(features)
+        # Mixing coefficients (\u03c0)
+        pi = F.softmax(self.mixing_layer(attn_output), dim=-1)  # Shape: [batch_size, seq_len, num_modes]
 
-        # Debugging shapes
-        print(f"Mu shape: {mu.shape}, B shape: {b.shape}, Uncertainty shape: {uncertainty.shape}")
+        # Mean (\u03bc) and scale (b)
+        mu = self.mu_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
+        b = self.b_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
 
-        return mu, b, uncertainty
+        # Uncertainty prediction
+        uncertainty = self.uncertainty_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
+
+        return pi, mu, b, uncertainty
 
     @staticmethod
-    def compute_laplace_loss(mu, b, targets):
+    def compute_laplace_loss(pi, mu, b, targets):
         """
-        Compute Laplace negative log-likelihood loss.
+        Compute the combined Laplace loss using the Winner-Takes-All strategy.
         Args:
-            mu: Predicted mean of shape [batch_size, seq_len, output_dim]
-            b: Predicted scale of shape [batch_size, seq_len, output_dim]
-            targets: Ground truth
-             targets: Ground truth tensor of shape [batch_size, seq_len, output_dim]
+            pi: Mixing coefficients of shape [batch_size, seq_len, num_modes]
+            mu: Predicted mean of shape [batch_size, seq_len, num_modes, output_dim]
+            b: Predicted scale of shape [batch_size, seq_len, num_modes, output_dim]
+            targets: Ground truth tensor of shape [batch_size, seq_len, output_dim]
         Returns:
-            loss: Computed Laplace loss as a scalar tensor
+            total_loss: Combined Laplace loss
         """
         epsilon = 1e-6  # To prevent division by zero
         b = b + epsilon
 
-        # Compute Laplace negative log-likelihood
+        # Expand targets for each mode
+        targets = targets.unsqueeze(2).expand_as(mu)  # Shape: [batch_size, seq_len, num_modes, output_dim]
+
+        # Compute Laplace negative log-likelihood for each mode
         diff = torch.abs(mu - targets)
-        log_likelihood = torch.log(2 * b) + diff / b
-        loss = log_likelihood.mean()  # Average over all elements
+        log_likelihood = torch.log(2 * b) + diff / b  # Shape: [batch_size, seq_len, num_modes, output_dim]
 
-        # Debugging the computed loss
-        print(f"Computed Laplace Loss: {loss.item()}")
+        # Sum over output_dim to get per-mode likelihood
+        per_mode_loss = log_likelihood.sum(dim=-1)  # Shape: [batch_size, seq_len, num_modes]
 
-        return loss
+        # Combine with mixing coefficients (\u03c0) using Winner-Takes-All
+        weighted_loss = pi * per_mode_loss
+        wta_loss, _ = torch.min(weighted_loss, dim=-1)  # Take the mode with minimum error
+
+        total_loss = wta_loss.mean()  # Average over batch and sequence
+
+        return total_loss
 
 
 # Example Usage
@@ -75,21 +97,24 @@ if __name__ == "__main__":
     batch_size = 4
     seq_len = 10
     input_dim = 128
-    output_dim = 64
+    output_dim = 2
+    num_modes = 3
 
-    model = MultimodalLaplaceDecoder(input_dim, output_dim)
+    model = MultimodalLaplaceDecoder(input_dim, output_dim, num_modes)
 
     # Example features and targets
-    features = torch.rand(batch_size, seq_len, input_dim)
+    high_level_features = torch.rand(batch_size, seq_len, input_dim)
+    lane_probabilities = torch.rand(batch_size, seq_len, input_dim)
     targets = torch.rand(batch_size, seq_len, output_dim)
 
     # Forward pass
-    mu, b, uncertainty = model(features)
+    pi, mu, b, uncertainty = model(high_level_features, lane_probabilities)
 
     # Compute loss
-    loss = model.compute_laplace_loss(mu, b, targets)
+    loss = model.compute_laplace_loss(pi, mu, b, targets)
 
-    print(f"Mu (Mean) Shape: {mu.shape}")
-    print(f"B (Scale) Shape: {b.shape}")
+    print(f"Pi Shape: {pi.shape}")
+    print(f"Mu Shape: {mu.shape}")
+    print(f"B Shape: {b.shape}")
     print(f"Uncertainty Shape: {uncertainty.shape}")
     print(f"Laplace Loss: {loss.item()}")

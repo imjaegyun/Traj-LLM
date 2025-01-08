@@ -54,6 +54,22 @@ class TrajLLM(pl.LightningModule):
             output_dim=config.modules.laplace_decoder.output_dim
         )
 
+        # Mamba Layer Integration (Optional)
+        self.mamba_layer = MambaLayer(
+            input_dim=config.modules.mamba.input_dim,
+            hidden_dim=config.modules.mamba.hidden_dim,
+            num_blocks=config.modules.mamba.num_blocks
+        ) if hasattr(config.modules, "mamba") else None
+
+        # Initialize parameters
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
 
     def forward(self, agent_inputs, lane_inputs):
         device = agent_inputs.device
@@ -67,145 +83,103 @@ class TrajLLM(pl.LightningModule):
         # Lane-aware probability learning
         lane_probabilities, lane_predictions = self.lane_probability_model(high_level_features, lane_inputs)
 
+        # Apply Mamba Layer if exists
+        if self.mamba_layer:
+            high_level_features = self.mamba_layer(high_level_features)
+
         # Multimodal Laplace decoding
         mu, b, uncertainty = self.laplace_decoder(high_level_features)
-        print(f"Mu shape: {mu.shape}, B shape: {b.shape}, Uncertainty shape: {uncertainty.shape}")
 
         return lane_probabilities, lane_predictions, mu, b
 
-
-
-
     def configure_optimizers(self):
-        # AdamW Optimizer 설정
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.config.train.lr, weight_decay=self.config.train.weight_decay)
-        return optimizer
-
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.config.train.lr_step, gamma=self.config.train.lr_gamma)
+        return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_idx):
-        # 입력 데이터 추출
         agent_inputs = batch['agent_features']
         lane_inputs = batch['lane_features']
         trajectory_points = batch['trajectory_points']
-        lane_labels = batch['lane_labels']  # [batch_size]
+        lane_labels = batch['lane_labels']
 
-        # Forward Pass
         lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
 
-        # `num_classes`를 동적으로 설정
-        num_classes = lane_probabilities.shape[-1]  # 마지막 차원이 num_classes
+        num_classes = lane_probabilities.shape[-1]
+        lane_probabilities = lane_probabilities.reshape(-1, num_classes)
+        lane_labels = lane_labels.reshape(-1)
 
-        # Reshape `lane_probabilities`와 `lane_labels`
-        lane_probabilities = lane_probabilities.reshape(-1, num_classes)  # [batch_size * seq_len, num_classes]
-        lane_labels = lane_labels.reshape(-1)  # [batch_size * seq_len]
-
-        # Loss 계산
         lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
         laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, trajectory_points)
         total_loss = lane_loss + laplace_loss
 
-        # Wandb 로깅
-        wandb.log({
-            "train/total_loss": total_loss.item(),
-            "train/lane_loss": lane_loss.item(),
-            "train/laplace_loss": laplace_loss.item()
-        })
-
-        # Lightning 로깅
-        self.log("train_loss", total_loss, on_step=True, on_epoch=True, logger=True)
-        self.log("train_lane_loss", lane_loss, on_step=True, on_epoch=True, logger=True)
-        self.log("train_laplace_loss", laplace_loss, on_step=True, on_epoch=True, logger=True)
+        self.log("train/total_loss", total_loss, on_step=True, on_epoch=True, logger=True)
+        self.log("train/lane_loss", lane_loss, on_step=True, on_epoch=True, logger=True)
+        self.log("train/laplace_loss", laplace_loss, on_step=True, on_epoch=True, logger=True)
 
         return total_loss
-
 
     def validation_step(self, batch, batch_idx):
         agent_inputs = batch['agent_features']
         lane_inputs = batch['lane_features']
-        lane_labels = batch['lane_labels']  # Shape: [batch_size, seq_len]
+        lane_labels = batch['lane_labels']
 
-        # Forward Pass
         lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
 
-        # Reshape lane_labels and lane_probabilities for CrossEntropyLoss
         batch_size, seq_len, num_classes = lane_probabilities.shape
-        lane_probabilities = lane_probabilities.reshape(-1, num_classes)  # Shape: [batch_size * seq_len, num_classes]
-        lane_labels = lane_labels.reshape(-1)  # Shape: [batch_size * seq_len]
-        print(f"lane_probabilities shape: {lane_probabilities.shape}, lane_labels shape: {lane_labels.shape}")
-        # Compute loss
-        lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
+        lane_probabilities = lane_probabilities.reshape(-1, num_classes)
+        lane_labels = lane_labels.reshape(-1)
 
+        lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
         laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, batch["trajectory_points"])
         total_loss = lane_loss + laplace_loss
 
-        # Log validation metrics
-        self.log("val_loss", total_loss, on_step=False, on_epoch=True, logger=True)
+        self.log("val/total_loss", total_loss, on_step=False, on_epoch=True, logger=True)
         return total_loss
-
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         agent_inputs = batch['agent_features']
         lane_inputs = batch['lane_features']
 
-        try:
-            # Forward Pass
-            lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
-            if lane_probabilities is None or lane_predictions is None:
-                raise ValueError("Invalid output: forward pass returned None")
+        lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
 
-            return {
-                "lane_probabilities": lane_probabilities.detach().cpu().numpy(),
-                "lane_predictions": lane_predictions.detach().cpu().numpy(),
-                "mu": mu.detach().cpu().numpy(),
-                "b": b.detach().cpu().numpy()
-            }
-        except Exception as e:
-            print(f"Error in predict_step for batch {batch_idx}: {e}")
-            return {
-                "lane_probabilities": None,
-                "lane_predictions": None,
-                "mu": None,
-                "b": None,
-                "error": str(e)
-            }
-    
+        return {
+            "lane_probabilities": lane_probabilities.detach().cpu().numpy(),
+            "lane_predictions": lane_predictions.detach().cpu().numpy(),
+            "mu": mu.detach().cpu().numpy(),
+            "b": b.detach().cpu().numpy()
+        }
+
 def train_main(config: DictConfig):
-    # Wandb Logger 초기화
     wandb_logger = WandbLogger(
         project=config.modules.wandb.project,
         entity=config.modules.wandb.get("entity", None),
         mode=config.modules.wandb.get("mode", "online")
     )
 
-    # 모델 초기화
     model = TrajLLM(config)
 
-    # Nuscenes DataLoader 설정
     nuscenes_path = config.modules.data.nuscenes_path
     train_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="train")
     val_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="val")
 
-    # DataLoader 설정
     batch_size = config.train.batch_size
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
-    # Trainer 초기화
     trainer = pl.Trainer(
         max_epochs=config.train.epochs,
-        accelerator='gpu',  # GPU 가속 설정
-        devices=config.train.gpus,  # 사용할 GPU 수
-        logger=wandb_logger
+        accelerator='gpu',
+        devices=config.train.gpus,
+        logger=wandb_logger,
+        gradient_clip_val=config.train.gradient_clip_val
     )
 
-    # 학습 시작
     trainer.fit(model, train_loader, val_loader)
-
 
 @hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
 def main(config: DictConfig):
     train_main(config)
-
 
 if __name__ == "__main__":
     main()

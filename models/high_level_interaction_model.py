@@ -1,42 +1,58 @@
 # models/high_level_interaction_model.py
 import torch
 import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel
+from transformers import LlamaModel
+
+class LoRA(nn.Module):
+    def __init__(self, input_dim, rank):
+        super(LoRA, self).__init__()
+        self.A = nn.Parameter(torch.randn(input_dim, rank) * 0.01)
+        self.B = nn.Parameter(torch.randn(rank, input_dim) * 0.01)
+
+    def forward(self, W, x):
+        return torch.matmul(W, x) + torch.matmul(self.B, torch.matmul(self.A, x))
 
 class HighLevelInteractionModel(nn.Module):
-    def __init__(self, llm_model_name, input_dim, hidden_dim, output_dim):
+    def __init__(self, llm_model_name, input_dim, output_dim):
         super(HighLevelInteractionModel, self).__init__()
 
-        # Load pre-trained LLM
-        self.llm = AutoModel.from_pretrained(llm_model_name)
+        # Load pre-trained Llama model
+        self.llm = LlamaModel.from_pretrained(llm_model_name)
 
-        # Input projection to hidden dimension
-        self.input_projection = nn.Linear(input_dim, hidden_dim)
+        # Extract Llama's hidden size
+        llama_hidden_size = self.llm.config.hidden_size
 
-        # Attention layer
-        self.attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
+        # Input projection to match Llama's hidden size
+        self.input_projection = nn.Linear(input_dim, llama_hidden_size)
 
-        # Feedforward network
-        self.feed_forward = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
-        )
+        # Output projection to match required output_dim
+        self.output_projection = nn.Linear(llama_hidden_size, output_dim)
 
     def forward(self, features, device):
+        """
+        Forward pass for high-level interaction modeling.
+        Args:
+            features (torch.Tensor): Input tensor [batch_size, seq_len, input_dim]
+            device (torch.device): The device to use (e.g., cuda)
+        Returns:
+            torch.Tensor: Output tensor [batch_size, seq_len, output_dim]
+        """
         # Move features to the correct device
         features = features.to(device)
 
-        # Project input features to hidden dimension
+        # Project input features to Llama's hidden size
         projected_inputs = self.input_projection(features)
 
-        # Attention mechanism
-        attn_output, _ = self.attention(projected_inputs, projected_inputs, projected_inputs)
+        # Llama forward pass
+        llama_outputs = self.llm(inputs_embeds=projected_inputs)  # Using inputs_embeds
+        hidden_states = llama_outputs.last_hidden_state  # Extract the last hidden state
 
-        # Feedforward processing
-        output = self.feed_forward(attn_output)
+        # Project to final output dimension
+        output = self.output_projection(hidden_states)
 
         return output
+
 
 
 # Example Usage
@@ -46,10 +62,13 @@ if __name__ == "__main__":
     input_dim = 128
     hidden_dim = 256
     output_dim = 128
-    llm_model_name = "meta-llama/Llama-3.2-3B"
+    llm_model_name = "gpt2"
 
     model = HighLevelInteractionModel(llm_model_name, input_dim, hidden_dim, output_dim)
-    example_inputs = ["A car is turning left.", "A pedestrian is crossing.", "The vehicle is stopped at a red light."] * batch_size
+    inputs = torch.rand(batch_size, seq_len, input_dim)
 
-    output = model(example_inputs)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    output = model(inputs, device)
     print(f"Output shape: {output.shape}")

@@ -1,60 +1,92 @@
-# models/lane_aware_probability_learning.py
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from models.mamba import MambaLayer
 
 class LaneAwareProbabilityLearning(nn.Module):
-    def __init__(self, agent_dim, lane_dim, hidden_dim, num_lanes):
+    def __init__(self, agent_dim, lane_dim, hidden_dim, num_lanes, num_mamba_blocks=3):
         super(LaneAwareProbabilityLearning, self).__init__()
-        
-        # Mamba Layer for lane feature enhancement
-        self.mamba_layer = MambaLayer(lane_dim, hidden_dim, num_blocks=4)
 
-        # Cross Attention between agent and lane features
+        # Linear projections for input features
+        self.linear_m = nn.Linear(agent_dim, hidden_dim)
+        self.linear_n = nn.Linear(agent_dim, hidden_dim)
+        self.conv1d = nn.Conv1d(hidden_dim, hidden_dim, kernel_size=1)
+
+        # Structured state matrices
+        self.state_matrix_a = nn.Parameter(torch.randn(hidden_dim, hidden_dim))
+        self.state_matrix_b = nn.Parameter(torch.randn(hidden_dim, hidden_dim))
+        self.state_matrix_c = nn.Parameter(torch.randn(hidden_dim, hidden_dim))
+
+        # Learnable parameters for discretization
+        self.delta_param = nn.Parameter(torch.randn(hidden_dim))
+
+        # Mamba Layer
+        self.mamba_layer = MambaLayer(input_dim=hidden_dim, hidden_dim=hidden_dim, num_blocks=num_mamba_blocks)
+
+        # Cross-Attention Layer
         self.cross_attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
 
-        # Lane probability prediction layers
-        self.linear_in = nn.Linear(hidden_dim, hidden_dim)
-        self.linear_out = nn.Linear(hidden_dim, num_lanes)
+        # Dropout and normalization
+        self.dropout = nn.Dropout(0.1)
+        self.instance_norm = nn.InstanceNorm1d(hidden_dim)
 
-    def forward(self, agent_features, lane_features):
-        try:
-            print(f"Agent features shape: {agent_features.shape}")
-            print(f"Lane features shape: {lane_features.shape}")
+        # Output layers
+        self.mlp = nn.Linear(hidden_dim, num_lanes)
 
-            # Mamba Layer
-            enhanced_lane_features = self.mamba_layer(lane_features)
-            print(f"Enhanced lane features shape: {enhanced_lane_features.shape}")
+    def forward(self, high_level_features, lane_inputs):
+        B, L, D = lane_inputs.size()
 
-            # Cross Attention
-            attn_output, _ = self.cross_attention(enhanced_lane_features, agent_features, agent_features)
-            print(f"Cross-attended features shape: {attn_output.shape}")
+        # Linear projections and non-linearity
+        m = self.linear_m(lane_inputs)  # Shape: (B, L, hidden_dim)
+        n = self.linear_n(lane_inputs)  # Shape: (B, L, hidden_dim)
+        m_prime = F.silu(self.conv1d(m.transpose(1, 2))).transpose(1, 2)  # Shape: (B, L, hidden_dim)
 
-            # Lane Probability
-            lane_probabilities = self.linear_out(self.linear_in(attn_output))
-            print(f"Lane probabilities shape: {lane_probabilities.shape}")
+        # Pass through Mamba Layer
+        q = self.mamba_layer(m_prime)  # Shape: (B, L, hidden_dim)
 
-            lane_predictions = torch.argmax(lane_probabilities, dim=-1)
-            print(f"Lane predictions shape: {lane_predictions.shape}")
+        # Structured state-space model (SSM) matrices
+        A = self.state_matrix_a
+        B = self.state_matrix_b
+        C = self.state_matrix_c
 
-            return lane_probabilities, lane_predictions
-        except Exception as e:
-            print(f"Error in LaneAwareProbabilityLearning: {e}")
-            return None, None
+        # Discretization of the matrices
+        delta = F.softplus(self.delta_param).unsqueeze(0).unsqueeze(0)  # Shape: (1, 1, hidden_dim)
+        A_discrete = A * delta
+        B_discrete = B * delta
+
+        # Selective state-space model computations
+        q_ssm = torch.bmm(A_discrete.expand(B, -1, -1), q) + torch.bmm(B_discrete.expand(B, -1, -1), n)
+        q_ssm = F.silu(q_ssm)
+
+        # Cross-Attention
+        cross_attended, _ = self.cross_attention(q_ssm, high_level_features, high_level_features)
+
+        # Normalization and dropout
+        q_final = self.instance_norm(self.dropout(cross_attended.transpose(1, 2))).transpose(1, 2)  # Shape: (B, L, hidden_dim)
+
+        # Probability computation
+        logits = self.mlp(q_final)  # Shape: (B, L, num_lanes)
+        lane_probabilities = F.softmax(logits, dim=-1)  # Shape: (B, L, num_lanes)
+
+        # Lane predictions
+        lane_predictions = torch.argmax(lane_probabilities, dim=-1)  # Shape: (B, L)
+
+        return lane_probabilities, lane_predictions
 
 # Example Usage
 if __name__ == "__main__":
     batch_size = 4
+    num_lanes = 5
     seq_len = 10
     agent_dim = 128
     lane_dim = 128
     hidden_dim = 256
-    num_lanes = 5
+    num_mamba_blocks = 3
 
-    model = LaneAwareProbabilityLearning(agent_dim, lane_dim, hidden_dim, num_lanes)
-    agent_features = torch.rand(batch_size, seq_len, agent_dim)
-    lane_features = torch.rand(batch_size, seq_len, lane_dim)
+    model = LaneAwareProbabilityLearning(agent_dim, lane_dim, hidden_dim, num_lanes, num_mamba_blocks)
+    high_level_features = torch.rand(batch_size, seq_len, hidden_dim)
+    lane_inputs = torch.rand(batch_size, seq_len, lane_dim)
 
-    lane_probabilities, lane_predictions = model(agent_features, lane_features)
-    print("Lane Probabilities:", lane_probabilities)
-    print("Lane Predictions:", lane_predictions)
+    lane_probabilities, lane_predictions = model(high_level_features, lane_inputs)
+    print(f"Lane Probabilities Shape: {lane_probabilities.shape}")
+    print(f"Lane Predictions Shape: {lane_predictions.shape}")
