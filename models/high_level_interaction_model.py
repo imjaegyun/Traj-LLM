@@ -1,64 +1,55 @@
 # models/high_level_interaction_model.py
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
 from transformers import AutoModel, AutoTokenizer
-from peft import LoraConfig, get_peft_model
 
 class HighLevelInteractionModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, llm_model_name, input_dim, hidden_dim, output_dim):
         super(HighLevelInteractionModel, self).__init__()
 
-        # LLM-like Transformer
-        self.transformer_layer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=4),
-            num_layers=2
-        )
+        # Load pre-trained LLM
+        self.llm = AutoModel.from_pretrained(llm_model_name)
 
-        # Input Projection
+        # Input projection to hidden dimension
         self.input_projection = nn.Linear(input_dim, hidden_dim)
 
-        # Layer Normalization
-        self.layer_norm = nn.LayerNorm(hidden_dim)
+        # Attention layer
+        self.attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
 
-        # Output Projection
-        self.output_projection = nn.Linear(hidden_dim, output_dim)
+        # Feedforward network
+        self.feed_forward = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
 
-    def forward(self, inputs):
-        # Project inputs
-        inputs = self.input_projection(inputs)
+    def forward(self, features, device):
+        # Move features to the correct device
+        features = features.to(device)
 
-        # Pass through Transformer
-        transformer_output = self.transformer_layer(inputs)
+        # Project input features to hidden dimension
+        projected_inputs = self.input_projection(features)
 
-        # Layer Normalization
-        normalized_output = self.layer_norm(transformer_output)
+        # Attention mechanism
+        attn_output, _ = self.attention(projected_inputs, projected_inputs, projected_inputs)
 
-        # Output Projection
-        output = self.output_projection(normalized_output)
+        # Feedforward processing
+        output = self.feed_forward(attn_output)
 
         return output
 
 
-# Example usage
+# Example Usage
 if __name__ == "__main__":
-    # Example input dimensions
-    batch_size = 8
-    input_dim = 16
-    hidden_dim = 64
+    batch_size = 4
+    seq_len = 10
+    input_dim = 128
+    hidden_dim = 256
     output_dim = 128
+    llm_model_name = "meta-llama/Llama-3.2-3B"
 
-    # Example text inputs (batch of sentences)
-    inputs = [
-        "The car is driving on the highway.",
-        "A pedestrian is crossing the street.",
-        "There is a traffic jam on the main road."
-    ] * (batch_size // 3)
+    model = HighLevelInteractionModel(llm_model_name, input_dim, hidden_dim, output_dim)
+    example_inputs = ["A car is turning left.", "A pedestrian is crossing.", "The vehicle is stopped at a red light."] * batch_size
 
-    # Model initialization
-    model_name = "meta-llama/Llama-3.2-3B"  # Replace with your model name on Hugging Face
-    model = HighLevelInteractionModel(model_name, input_dim, hidden_dim, output_dim)
-
-    # Forward pass
-    outputs = model(inputs)
-    print("Output shape:", outputs.shape)
+    output = model(example_inputs)
+    print(f"Output shape: {output.shape}")

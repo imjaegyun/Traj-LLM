@@ -1,3 +1,4 @@
+# data/nuscenes_data_loader.py
 import os
 import numpy as np
 import torch
@@ -8,12 +9,6 @@ class NuscenesDataset(Dataset):
     def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', transform=None, target_length=15):
         """
         NuscenesDataset 초기화
-        Args:
-            nuscenes_path: NuScenes 데이터셋의 루트 경로
-            version: NuScenes 데이터셋 버전 ('v1.0-trainval')
-            split: 데이터 분할 ('train' 또는 'val')
-            transform: 데이터 변환 함수
-            target_length: 입력 데이터의 시퀀스 길이를 맞출 목표 길이
         """
         self.nusc = NuScenes(version=version, dataroot=nuscenes_path, verbose=True)
         self.split = split
@@ -53,8 +48,8 @@ class NuscenesDataset(Dataset):
             lane_features = self._extract_lane_features(sample)
 
             # Target trajectory points 및 lane labels 생성 (Mock 데이터)
-            target_trajectory = np.random.rand(1, 2)
-            lane_label = np.random.randint(0, 5)
+            target_trajectory = self._generate_mock_trajectory()
+            lane_label = self._generate_mock_lane_label()
 
             if self.transform:
                 agent_features = self.transform(agent_features)
@@ -68,13 +63,8 @@ class NuscenesDataset(Dataset):
             }
 
         except KeyError as e:
-            print(f"KeyError: {e}. Returning default values for sample with token: {sample['token']}")
-            return {
-                'agent_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
-                'lane_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
-                'trajectory_points': torch.zeros((1, 2), dtype=torch.float32),
-                'lane_labels': torch.tensor(0, dtype=torch.long)
-            }
+            print(f"[ERROR] Missing key in sample data: {e}. Returning default values.")
+            return self._get_default_sample()
 
     def _extract_agent_features(self, sample):
         """
@@ -92,22 +82,38 @@ class NuscenesDataset(Dataset):
 
     def _pad_or_truncate(self, features, target_length):
         """
-        시퀀스 길이를 target_length로 맞춤
-        Args:
-            features: 입력 데이터
-            target_length: 목표 시퀀스 길이
-        Returns:
-            패딩 또는 잘라낸 데이터
+        시퀀스 데이터를 패딩하거나 자릅니다.
         """
         current_length = features.shape[0]
         if current_length < target_length:
-            # 패딩 추가
             padding = np.zeros((target_length - current_length, features.shape[1]))
             features = np.vstack((features, padding))
         elif current_length > target_length:
-            # 잘라내기
             features = features[:target_length]
         return features
+
+    def _generate_mock_trajectory(self):
+        """
+        Mock 궤적 데이터를 생성합니다.
+        """
+        return np.random.rand(self.target_length, 2)  # [target_length, 2]
+
+    def _generate_mock_lane_label(self):
+        """
+        Mock lane label을 생성합니다.
+        """
+        return np.random.randint(0, 6, size=(self.target_length,))  # [target_length]
+
+    def _get_default_sample(self):
+        """
+        기본값을 반환합니다.
+        """
+        return {
+            'agent_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
+            'lane_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
+            'trajectory_points': torch.zeros((self.target_length, 2), dtype=torch.float32),
+            'lane_labels': torch.zeros((self.target_length,), dtype=torch.long)
+        }
 
 # Example usage
 if __name__ == "__main__":
@@ -122,22 +128,11 @@ if __name__ == "__main__":
 
         print("Iterating through the dataset...")
         for i, batch in enumerate(dataloader):
-            if batch is None:
-                print(f"Batch {i} is None. Skipping.")
-                continue
-
-            print(f"Batch {i} details:")
+            print(f"Batch {i}:")
             print(f"  Agent features shape: {batch['agent_features'].shape}")
             print(f"  Lane features shape: {batch['lane_features'].shape}")
             print(f"  Trajectory points shape: {batch['trajectory_points'].shape}")
             print(f"  Lane labels shape: {batch['lane_labels'].shape}")
-
-            # Debugging individual data samples
-            for j in range(len(batch['agent_features'])):
-                print(f"    Sample {j} Agent Features: {batch['agent_features'][j]}")
-                print(f"    Sample {j} Lane Features: {batch['lane_features'][j]}")
-                print(f"    Sample {j} Trajectory Points: {batch['trajectory_points'][j]}")
-                print(f"    Sample {j} Lane Label: {batch['lane_labels'][j]}")
 
             if i == 2:
                 break
@@ -146,3 +141,4 @@ if __name__ == "__main__":
         print(f"Dataset Error: {e}")
     except Exception as e:
         print(f"Unexpected Error: {e}")
+
