@@ -1,0 +1,16 @@
+{"time":"2025-01-08T11:34:48.673434226+09:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-08T11:34:48.673449336+09:00","level":"INFO","msg":"created symlink","path":"wandb/run-20250108_113448-celno8i8/logs/debug-core.log"}
+{"time":"2025-01-08T11:34:48.77917742+09:00","level":"INFO","msg":"created new stream","id":"celno8i8"}
+{"time":"2025-01-08T11:34:48.779201631+09:00","level":"INFO","msg":"stream: started","id":"celno8i8"}
+{"time":"2025-01-08T11:34:48.779280395+09:00","level":"INFO","msg":"writer: Do: started","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:48.779279945+09:00","level":"INFO","msg":"sender: started","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:48.779351667+09:00","level":"INFO","msg":"handler: started","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:49.805307113+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T11:34:50.92436361+09:00","level":"INFO","msg":"stream: closing","id":"celno8i8"}
+{"time":"2025-01-08T11:34:50.924395161+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-08T11:34:50.92486392+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-08T11:34:51.768797733+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-08T11:34:52.162521499+09:00","level":"INFO","msg":"handler: closed","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:52.162579711+09:00","level":"INFO","msg":"sender: closed","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:52.162568741+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":"celno8i8"}
+{"time":"2025-01-08T11:34:52.162737997+09:00","level":"INFO","msg":"stream: closed","id":"celno8i8"}

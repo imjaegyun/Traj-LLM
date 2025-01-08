@@ -1,0 +1,16 @@
+{"time":"2025-01-08T13:26:00.78573076+09:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-08T13:26:00.785747991+09:00","level":"INFO","msg":"created symlink","path":"wandb/run-20250108_132600-mtmkudma/logs/debug-core.log"}
+{"time":"2025-01-08T13:26:00.892703393+09:00","level":"INFO","msg":"created new stream","id":"mtmkudma"}
+{"time":"2025-01-08T13:26:00.892752884+09:00","level":"INFO","msg":"stream: started","id":"mtmkudma"}
+{"time":"2025-01-08T13:26:00.892798295+09:00","level":"INFO","msg":"handler: started","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:26:00.892813245+09:00","level":"INFO","msg":"writer: Do: started","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:26:00.892908177+09:00","level":"INFO","msg":"sender: started","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:26:02.038872815+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T13:31:26.882843569+09:00","level":"INFO","msg":"stream: closing","id":"mtmkudma"}
+{"time":"2025-01-08T13:31:26.88292817+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-08T13:31:26.883556022+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-08T13:31:28.781940271+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-08T13:31:29.140685714+09:00","level":"INFO","msg":"handler: closed","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:31:29.140762215+09:00","level":"INFO","msg":"sender: closed","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:31:29.140759955+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":"mtmkudma"}
+{"time":"2025-01-08T13:31:29.140887737+09:00","level":"INFO","msg":"stream: closed","id":"mtmkudma"}

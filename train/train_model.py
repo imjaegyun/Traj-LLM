@@ -44,7 +44,7 @@ class TrajLLM(pl.LightningModule):
         )
 
         # Lane-aware Probability Learning
-        print(f"Initializing LaneAwareProbabilityLearning with hidden_dim={config.modules.lane_probability.hidden_dim}")
+        # Lane-aware 모델 초기화
         self.lane_probability_model = LaneAwareProbabilityLearning(
             agent_dim=config.modules.lane_probability.agent_dim,
             lane_dim=config.modules.lane_probability.lane_dim,
@@ -53,6 +53,7 @@ class TrajLLM(pl.LightningModule):
         )
 
         # Multimodal Laplace Decoder
+        # Laplace Decoder 초기화
         self.laplace_decoder = MultimodalLaplaceDecoder(
             input_dim=config.modules.laplace_decoder.input_dim,
             output_dim=config.modules.laplace_decoder.output_dim
@@ -61,26 +62,23 @@ class TrajLLM(pl.LightningModule):
     def forward(self, agent_inputs, lane_inputs):
         # Sparse Encoding
         sparse_features = self.sparse_encoder(agent_inputs, lane_inputs)
-        print(f"Sparse features shape: {sparse_features.shape}")
 
         # MAMBA Layer
         mamba_features = self.mamba_layer(sparse_features)
-        print(f"Mamba features shape: {mamba_features.shape}")
 
         # High-level Interaction
         high_level_features = self.high_level_model(mamba_features)
-        print(f"High-level features shape: {high_level_features.shape}")
 
         # Lane Probability Learning
         lane_probabilities, lane_predictions = self.lane_probability_model(high_level_features, lane_inputs)
-        print(f"Lane probabilities shape: {lane_probabilities.shape}")
 
         # Multimodal Laplace Decoding
         mu, b = self.laplace_decoder(high_level_features)
-        print(f"Mu shape: {mu.shape}, B shape: {b.shape}")
 
         return lane_probabilities, lane_predictions, mu, b
+
     def configure_optimizers(self):
+        # Optimizer 설정
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.train.lr)
         return optimizer
 
@@ -94,12 +92,7 @@ class TrajLLM(pl.LightningModule):
         # Forward Pass
         lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
 
-        # 크기 확인 및 출력
-        print(f"Lane probabilities shape: {lane_probabilities.shape}")  # [batch_size, num_lanes, num_classes]
-        print(f"Lane labels shape: {lane_labels.shape}")  # [batch_size]
-
-        # CrossEntropyLoss를 위해 올바른 크기로 변환
-        # lane_probabilities에서 가장 높은 확률의 lane을 비교하기 위해 [batch_size, num_classes] 형태로 축소
+        # CrossEntropyLoss를 위해 크기 변환
         lane_probabilities = lane_probabilities.mean(dim=1)  # [batch_size, num_classes]
 
         # Loss 계산
@@ -107,13 +100,19 @@ class TrajLLM(pl.LightningModule):
         laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, trajectory_points)
         total_loss = lane_loss + laplace_loss
 
-        # 로그 기록
+        # Wandb 로깅 추가
+        wandb.log({
+            "train/total_loss": total_loss.item(),
+            "train/lane_loss": lane_loss.item(),
+            "train/laplace_loss": laplace_loss.item()
+        })
+
+        # Lightning 내부 로깅
         self.log("train_loss", total_loss, on_step=True, on_epoch=True, logger=True)
         self.log("train_lane_loss", lane_loss, on_step=True, on_epoch=True, logger=True)
         self.log("train_laplace_loss", laplace_loss, on_step=True, on_epoch=True, logger=True)
 
         return total_loss
-
 
     def validation_step(self, batch, batch_idx):
         # 입력 데이터 추출
@@ -125,27 +124,24 @@ class TrajLLM(pl.LightningModule):
         # Forward Pass
         lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
 
-        # 크기 확인 및 출력
-        print(f"Lane probabilities shape: {lane_probabilities.shape}")  # [batch_size, num_lanes, num_classes]
-        print(f"Lane labels shape: {lane_labels.shape}")  # [batch_size]
-
         # CrossEntropyLoss를 위해 크기 변환
         batch_size, num_lanes, num_classes = lane_probabilities.shape
-
-        # lane_labels 확장: [batch_size] -> [batch_size, num_lanes]
         lane_labels = lane_labels.unsqueeze(1).expand(-1, num_lanes).reshape(-1)
         lane_probabilities = lane_probabilities.reshape(-1, num_classes)
-
-        # 변환 후 크기 출력
-        print(f"Reshaped lane probabilities shape: {lane_probabilities.shape}")  # [batch_size * num_lanes, num_classes]
-        print(f"Reshaped lane labels shape: {lane_labels.shape}")  # [batch_size * num_lanes]
 
         # Loss 계산
         lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
         laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, trajectory_points)
         total_loss = lane_loss + laplace_loss
 
-        # Wandb에 로깅
+        # Wandb 로깅 추가
+        wandb.log({
+            "val/total_loss": total_loss.item(),
+            "val/lane_loss": lane_loss.item(),
+            "val/laplace_loss": laplace_loss.item()
+        })
+
+        # Lightning 내부 로깅
         self.log("val_loss", total_loss, on_step=False, on_epoch=True, logger=True)
         self.log("val_lane_loss", lane_loss, on_step=False, on_epoch=True, logger=True)
         self.log("val_laplace_loss", laplace_loss, on_step=False, on_epoch=True, logger=True)
@@ -153,42 +149,36 @@ class TrajLLM(pl.LightningModule):
         return total_loss
 
 
-
-
 def train_main(config: DictConfig):
-    # Initialize Wandb Logger
+    # Wandb Logger 초기화
     wandb_logger = WandbLogger(
         project=config.modules.wandb.project,
         entity=config.modules.wandb.get("entity", None),
         mode=config.modules.wandb.get("mode", "online")
     )
 
-    # Model initialization
+    # 모델 초기화
     model = TrajLLM(config)
 
-    # Nuscenes DataLoader setup
+    # Nuscenes DataLoader 설정
     nuscenes_path = config.modules.data.nuscenes_path
     train_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="train")
     val_dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="val")
 
-    # Ensure `train` settings are loaded correctly
+    # DataLoader 설정
     batch_size = config.train.batch_size
-    num_epochs = config.train.epochs
-    learning_rate = config.train.lr
-    gpus = config.train.gpus
-
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
-    # Trainer initialization
+    # Trainer 초기화
     trainer = pl.Trainer(
-        max_epochs=num_epochs,
+        max_epochs=config.train.epochs,
         accelerator='gpu',  # GPU 가속 설정
-        devices=gpus,       # 사용할 GPU 수
+        devices=config.train.gpus,  # 사용할 GPU 수
         logger=wandb_logger
     )
 
-    # Start training
+    # 학습 시작
     trainer.fit(model, train_loader, val_loader)
 
 

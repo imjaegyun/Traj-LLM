@@ -1,0 +1,20 @@
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                   | Type                         | Params | Mode
+--------------------------------------------------------------------------------
+0 | sparse_encoder         | SparseContextEncoder         | 231 K  | train
+1 | mamba_layer            | MambaLayer                   | 330 K  | train
+2 | high_level_model       | HighLevelInteractionModel    | 1.2 M  | train
+3 | lane_probability_model | LaneAwareProbabilityLearning | 347 K  | train
+4 | laplace_decoder        | MultimodalLaplaceDecoder     | 516    | train
+--------------------------------------------------------------------------------
+2.1 M     Trainable params
+0         Non-trainable params
+2.1 M     Total params
+8.515     Total estimated model params size (MB)
+90        Modules in train mode
+0         Modules in eval mode
+Epoch 9: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 43/43 [00:04<00:00, 10.66it/s, v_num=xxnh]
+/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py:310: The number of training batches (43) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
+                                                                                                                                                                                                                
+`Trainer.fit` stopped: `max_epochs=10` reached.
