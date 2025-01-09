@@ -17,7 +17,7 @@ class HighLevelInteractionModel(nn.Module):
     def __init__(self, llm_model_name, input_dim, output_dim):
         super(HighLevelInteractionModel, self).__init__()
 
-        # Load pre-trained Llama model
+        # Load pre-trained Llama model (or GPT2, etc.)
         self.llm = LlamaModel.from_pretrained(llm_model_name)
 
         # Extract Llama's hidden size
@@ -33,10 +33,10 @@ class HighLevelInteractionModel(nn.Module):
         """
         Forward pass for high-level interaction modeling.
         Args:
-            features (torch.Tensor): Input tensor [batch_size, seq_len, input_dim]
-            device (torch.device): The device to use (e.g., cuda)
+            features (torch.Tensor): [batch_size, seq_len, input_dim]
+            device (torch.device): The device to use
         Returns:
-            torch.Tensor: Output tensor [batch_size, seq_len, output_dim]
+            torch.Tensor: [batch_size, seq_len, output_dim]
         """
         # Move features to the correct device
         features = features.to(device)
@@ -56,23 +56,3 @@ class HighLevelInteractionModel(nn.Module):
         print(f"[DEBUG] Final output shape: {output.shape}")
 
         return output
-
-
-
-# Example Usage
-if __name__ == "__main__":
-    batch_size = 4
-    seq_len = 10
-    input_dim = 128
-    hidden_dim = 256
-    output_dim = 128
-    llm_model_name = "gpt2"
-
-    model = HighLevelInteractionModel(llm_model_name, input_dim, hidden_dim, output_dim)
-    inputs = torch.rand(batch_size, seq_len, input_dim)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    output = model(inputs, device)
-    print(f"Output shape: {output.shape}")

@@ -79,8 +79,12 @@ class NuscenesDataset(Dataset):
 
             lane_features = np.array(lane_features)
 
-            # 차원 변환: (N, 2) -> (self.target_length, 128)
-            lane_features = np.pad(lane_features, ((0, max(0, self.target_length - lane_features.shape[0])), (0, 126)), mode='constant')
+            # (N, 2) -> 128차원으로 패딩. (실제론 더욱 복잡한 차원 추출 가능)
+            lane_features = np.pad(
+                lane_features,
+                ((0, max(0, self.target_length - lane_features.shape[0])), (0, 126)),
+                mode='constant'
+            )
             lane_features = lane_features[:self.target_length, :128]
 
             return lane_features
@@ -131,7 +135,7 @@ class NuscenesDataset(Dataset):
                 trajectory = np.concatenate([trajectory, np.tile(last_traj, (diff, 1))], axis=0)
                 velocity = np.concatenate([velocity, np.tile(last_vel, (diff, 1))], axis=0)
 
-            agent_state = np.hstack((trajectory, velocity))
+            agent_state = np.hstack((trajectory, velocity))  # (6, 4)
             return agent_state
 
         except Exception as e:
@@ -152,7 +156,6 @@ class NuscenesDataset(Dataset):
             points.append([x, y])
 
             if current_sample['next'] == "":
-                # 더 이상 다음이 없으면 중단
                 break
             else:
                 current_sample = self.nusc.get('sample', current_sample['next'])
@@ -166,3 +169,9 @@ class NuscenesDataset(Dataset):
 
         return np.array(points)
 
+    def _get_default_sample(self):
+        return {
+            'agent_features': torch.zeros(self.output_length, 4, dtype=torch.float32),
+            'lane_features': torch.zeros(self.target_length, 128, dtype=torch.float32),
+            'trajectory_points': torch.zeros(self.target_length, 2, dtype=torch.float32),
+        }

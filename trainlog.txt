@@ -9,22 +9,18 @@ Please specify a compatability version level, or None.
 Will assume defaults for version 1.1
   @hydra.main(config_path="configs", config_name="traj_llm")
 Starting training...
-
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
-Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.59it/s]
-Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.42it/s]
-Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.25it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.60it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.44it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.26it/s]
 GPU available: True (cuda), used: True
 TPU available: False, using: 0 TPU cores
 HPU available: False, using: 0 HPUs
 wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
 wandb: Currently logged in as: imij0522 (imjaegyun). Use `wandb login --relogin` to force relogin
 wandb: Tracking run with wandb version 0.19.1
-wandb: Run data is saved locally in ./wandb/run-20250110_015944-pmk4exva
+wandb: Run data is saved locally in ./wandb/run-20250110_033031-zo8m6w5m
 wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run pious-vortex-160
+wandb: Syncing run desert-deluge-166
 wandb: ⭐️ View project at https://wandb.ai/imjaegyun/Traj-LLM
-wandb: 🚀 View run at https://wandb.ai/imjaegyun/Traj-LLM/runs/pmk4exva
+wandb: 🚀 View run at https://wandb.ai/imjaegyun/Traj-LLM/runs/zo8m6w5m
 LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
 
   | Name                   | Type                         | Params | Mode 
@@ -32,14 +28,14 @@ LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
 0 | sparse_encoder         | SparseContextEncoder         | 826 K  | train
 1 | high_level_model       | HighLevelInteractionModel    | 3.2 B  | train
 2 | lane_probability_model | LaneAwareProbabilityLearning | 429 K  | train
-3 | laplace_decoder        | MultimodalLaplaceDecoder     | 78.2 K | train
+3 | laplace_decoder        | MultimodalLaplaceDecoder     | 79.1 K | train
 4 | mamba_layer            | MambaLayer                   | 330 K  | train
 --------------------------------------------------------------------------------
 3.2 B     Trainable params
 0         Non-trainable params
 3.2 B     Total params
-12,860.818Total estimated model params size (MB)
-100       Modules in train mode
+12,860.819Total estimated model params size (MB)
+101       Modules in train mode
 397       Modules in eval mode
 ======
 Loading NuScenes tables for version v1.0-trainval...
@@ -56,10 +52,10 @@ Loading NuScenes tables for version v1.0-trainval...
 2631083 sample_data,
 1166187 sample_annotation,
 4 map,
-Done loading in 23.386 seconds.
+Done loading in 23.559 seconds.
 ======
 Reverse indexing ...
-Done reverse indexing in 5.5 seconds.
+Done reverse indexing in 5.4 seconds.
 ======
 ======
 Loading NuScenes tables for version v1.0-trainval...
@@ -76,35 +72,215 @@ Loading NuScenes tables for version v1.0-trainval...
 2631083 sample_data,
 1166187 sample_annotation,
 4 map,
-Done loading in 26.495 seconds.
+Done loading in 27.064 seconds.
 ======
 Reverse indexing ...
 Done reverse indexing in 5.5 seconds.
 ======
-
-Sanity Checking: |          | 0/? [00:00<?, ?it/s]
-Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]
-Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No lanes found near ego position: [1325.0349258988065, 1102.3165183598812, 0.0]
-[DEBUG] No lanes found near ego position: [1236.6507006962584, 997.1128806383613, 0.0]
-[DEBUG] No lanes found near ego position: [750.9568410553911, 569.8419103692459, 0.0]
-[DEBUG] No lanes found near ego position: [507.90058216215584, 785.2736450593233, 0.0]
-[DEBUG] No lanes found near ego position: [1103.8415488364885, 1352.8133459959045, 0.0]
-[DEBUG] No lanes found near ego position: [1213.844697173049, 1347.4902734527006, 0.0]
-[DEBUG] No lanes found near ego position: [1304.754851254319, 1253.2473152409166, 0.0]
-[DEBUG] No lanes found near ego position: [1722.1013927384486, 961.9369153228868, 0.0]
-[DEBUG] No lanes found near ego position: [1762.290575832974, 921.6974863646678, 0.0]
-[DEBUG] No lanes found near ego position: [1121.6669181914544, 1342.124439132646, 0.0]
-[DEBUG] No lanes found near ego position: [732.5318104204882, 1542.2479914065234, 0.0]
-[DEBUG] No lanes found near ego position: [477.9496225475568, 2001.8298227541607, 0.0]
-[DEBUG] No lanes found near ego position: [352.8730521014518, 1866.2101143516606, 0.0]
-[DEBUG] No lanes found near ego position: [660.1204729787391, 1623.3365977692747, 0.0]
-[DEBUG] No lanes found near ego position: [1033.857121538707, 1728.5689500913056, 0.0]
-[DEBUG] No lanes found near ego position: [1164.5163616298892, 1657.97154741978, 0.0]
-[DEBUG] No lanes found near ego position: [1434.3331640845877, 1533.1431728709344, 0.0]
-[DEBUG] No lanes found near ego position: [1355.5038716099841, 1582.168604636474, 0.0]
-[DEBUG] No lanes found near ego position: [1240.3200325520347, 1636.1147962345797, 0.0]
-[DEBUG] No lanes found near ego position: [1103.5385563428035, 1692.7994191180205, 0.0]
-[DEBUG] No lanes found near ego position: [365.38537860038764, 1917.0080672318543, 0.0]
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] Agent encoded shape: torch.Size([16, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([16, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([16, 6, 128])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] Input features shape: torch.Size([16, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([16, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([16, 6, 3072])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] m shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([16, 240, 128]), values: tensor([[ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224],
+        [ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.2859, 0.5066, 0.4797, 1.4157, 0.6129, 1.6175, 0.3211, 1.2951, 0.1912,
+         1.8074, 0.4517, 0.6040, 1.0506, 0.8608, 1.1552, 3.0365, 0.4025, 0.7058,
+         0.2390, 1.3548, 1.7655, 1.2889, 0.8930, 0.6965, 0.7703, 0.8811, 1.6070,
+         0.9946, 0.5357, 0.2875, 0.5148, 0.7568, 1.9036, 1.0110, 0.1283, 1.4339,
+         0.3024, 0.3913, 0.6497, 0.8503, 0.1529, 1.2125, 0.8997, 1.1274, 0.4861,
+         0.9274, 0.4051, 2.0729, 1.0552, 2.8675, 1.3550, 0.4640, 0.2690, 1.3955,
+         0.1627, 0.5405, 0.7877, 0.8888, 0.3087, 0.9650, 0.2773, 1.3854, 0.3170,
+         1.0973, 0.5575, 1.1928, 1.8948, 0.5494, 0.9322, 1.6007, 0.5198, 0.9823,
+         0.7418, 0.6303, 0.6803, 0.4796, 0.4987, 0.1166, 0.6207, 0.7658, 0.1520,
+         1.6539, 0.0336, 1.4528, 0.1543, 0.1394, 0.4581, 1.1084, 0.7352, 0.8097,
+         0.3582, 1.2453, 0.3386, 1.1560, 2.5210, 0.2482, 0.2146, 0.7823, 0.4904,
+         1.0963, 1.1597, 0.9932, 1.3028, 1.2279, 0.4098, 1.5922, 0.9976, 0.4147,
+         0.2585, 0.7971, 0.6452, 0.8502, 0.8201, 0.6471, 1.3965, 1.3557, 1.5580,
+         0.6592, 0.2795, 0.3927, 0.9489, 0.3882, 0.3708, 0.6851, 0.4137, 0.5157,
+         0.6866, 0.6902]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([16, 128, 128]), values: tensor([[ 0.5572, -0.2911,  0.6843,  1.4922, -0.8415],
+        [ 0.1753, -0.9998, -1.0858,  0.7864,  0.0416],
+        [-0.4156,  0.5428, -0.3375, -2.0033, -0.4493],
+        [ 0.2669,  0.2661,  0.3844,  1.3905,  1.1762],
+        [-0.6298,  0.4736, -0.4162, -1.0500,  0.9878]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([16, 128, 128]), values: tensor([[-0.3915, -0.1729, -0.6696,  0.0837,  0.7071],
+        [-0.3654,  0.9176, -0.3910, -0.8607, -0.7185],
+        [ 0.5047,  0.1441, -0.1394,  1.1858, -0.6007],
+        [ 0.2512,  0.2366, -0.5121, -1.2894,  0.4543],
+        [-0.0353, -0.0487,  0.5193, -1.8840, -0.1368]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([16, 240, 128]), values: tensor([[-0.3957,  0.0672,  0.0728,  0.2458, -0.1041],
+        [-0.3957,  0.0672,  0.0728,  0.2458, -0.1041]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([16, 240, 6]), values: tensor([[ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562],
+        [ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([16, 240, 6]), values: tensor([[0.1952, 0.1966, 0.1642, 0.1629, 0.1158],
+        [0.1952, 0.1966, 0.1642, 0.1629, 0.1158]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([16, 240]), values: tensor([1, 1, 1, 1, 1], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([16, 6, 128])
+[DEBUG] Pi shape: torch.Size([16, 6, 5])
+Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  3.94it/s][DEBUG] Agent encoded shape: torch.Size([16, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([16, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([16, 6, 128])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] Input features shape: torch.Size([16, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([16, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([16, 6, 3072])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] m shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([16, 240, 128]), values: tensor([[ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224],
+        [ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.2859, 0.5066, 0.4797, 1.4157, 0.6129, 1.6175, 0.3211, 1.2951, 0.1912,
+         1.8074, 0.4517, 0.6040, 1.0506, 0.8608, 1.1552, 3.0365, 0.4025, 0.7058,
+         0.2390, 1.3548, 1.7655, 1.2889, 0.8930, 0.6965, 0.7703, 0.8811, 1.6070,
+         0.9946, 0.5357, 0.2875, 0.5148, 0.7568, 1.9036, 1.0110, 0.1283, 1.4339,
+         0.3024, 0.3913, 0.6497, 0.8503, 0.1529, 1.2125, 0.8997, 1.1274, 0.4861,
+         0.9274, 0.4051, 2.0729, 1.0552, 2.8675, 1.3550, 0.4640, 0.2690, 1.3955,
+         0.1627, 0.5405, 0.7877, 0.8888, 0.3087, 0.9650, 0.2773, 1.3854, 0.3170,
+         1.0973, 0.5575, 1.1928, 1.8948, 0.5494, 0.9322, 1.6007, 0.5198, 0.9823,
+         0.7418, 0.6303, 0.6803, 0.4796, 0.4987, 0.1166, 0.6207, 0.7658, 0.1520,
+         1.6539, 0.0336, 1.4528, 0.1543, 0.1394, 0.4581, 1.1084, 0.7352, 0.8097,
+         0.3582, 1.2453, 0.3386, 1.1560, 2.5210, 0.2482, 0.2146, 0.7823, 0.4904,
+         1.0963, 1.1597, 0.9932, 1.3028, 1.2279, 0.4098, 1.5922, 0.9976, 0.4147,
+         0.2585, 0.7971, 0.6452, 0.8502, 0.8201, 0.6471, 1.3965, 1.3557, 1.5580,
+         0.6592, 0.2795, 0.3927, 0.9489, 0.3882, 0.3708, 0.6851, 0.4137, 0.5157,
+         0.6866, 0.6902]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([16, 128, 128]), values: tensor([[ 0.5572, -0.2911,  0.6843,  1.4922, -0.8415],
+        [ 0.1753, -0.9998, -1.0858,  0.7864,  0.0416],
+        [-0.4156,  0.5428, -0.3375, -2.0033, -0.4493],
+        [ 0.2669,  0.2661,  0.3844,  1.3905,  1.1762],
+        [-0.6298,  0.4736, -0.4162, -1.0500,  0.9878]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([16, 128, 128]), values: tensor([[-0.3915, -0.1729, -0.6696,  0.0837,  0.7071],
+        [-0.3654,  0.9176, -0.3910, -0.8607, -0.7185],
+        [ 0.5047,  0.1441, -0.1394,  1.1858, -0.6007],
+        [ 0.2512,  0.2366, -0.5121, -1.2894,  0.4543],
+        [-0.0353, -0.0487,  0.5193, -1.8840, -0.1368]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([16, 240, 128]), values: tensor([[-0.3957,  0.0672,  0.0728,  0.2458, -0.1041],
+        [-0.3957,  0.0672,  0.0728,  0.2458, -0.1041]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([16, 240, 6]), values: tensor([[ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562],
+        [ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([16, 240, 6]), values: tensor([[0.1952, 0.1966, 0.1642, 0.1629, 0.1158],
+        [0.1952, 0.1966, 0.1642, 0.1629, 0.1158]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([16, 240]), values: tensor([1, 1, 1, 1, 1], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([16, 6, 128])
+[DEBUG] Pi shape: torch.Size([16, 6, 5])
+Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  6.76it/s]                                                                           /home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py:310: The number of training batches (43) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
+Training: |          | 0/? [00:00<?, ?it/s]Training:   0%|          | 0/43 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/43 [00:00<?, ?it/s] [DEBUG] No lanes found near ego position: [1608.7318775081123, 1307.5056452851475, 0.0]
+[DEBUG] No lanes found near ego position: [1185.1006649512797, 1134.9240472924398, 0.0]
+[DEBUG] No lanes found near ego position: [806.5616116868005, 517.0245952346901, 0.0]
+[DEBUG] No lanes found near ego position: [1138.5626625508191, 1168.4387323524832, 0.0]
+[DEBUG] No lanes found near ego position: [1406.4088378104964, 1173.6586978870314, 0.0]
+[DEBUG] No lanes found near ego position: [1426.494156049257, 1191.162158469093, 0.0]
+[DEBUG] No lanes found near ego position: [1704.5165380975154, 841.904062886627, 0.0]
+[DEBUG] No lanes found near ego position: [1754.8730840136686, 1221.799484438248, 0.0]
+[DEBUG] No lanes found near ego position: [2107.4776589472353, 877.8400818546625, 0.0]
+[DEBUG] No lanes found near ego position: [1726.6892512445472, 1241.3669944381575, 0.0]
+[DEBUG] No lanes found near ego position: [2387.6744392912324, 797.0508200734504, 0.0]
+[DEBUG] No lanes found near ego position: [2271.3841581047886, 877.1826585497877, 0.0]
+[DEBUG] No lanes found near ego position: [1264.1553928030544, 1013.877844866191, 0.0]
+[DEBUG] No lanes found near ego position: [1571.1348166973648, 847.4217406099237, 0.0]
+[DEBUG] No lanes found near ego position: [995.0057905333142, 1375.5598880833204, 0.0]
+[DEBUG] No lanes found near ego position: [2238.6389441393835, 877.0562068216243, 0.0]
+[DEBUG] No lanes found near ego position: [2247.3588510842415, 881.1724099777157, 0.0]
+[DEBUG] No lanes found near ego position: [1651.354724457705, 868.7005950814447, 0.0]
+[DEBUG] No lanes found near ego position: [1978.1367167783292, 1081.0975573421824, 0.0]
+[DEBUG] No lanes found near ego position: [2526.7565904062476, 817.3111239565195, 0.0]
+[DEBUG] No lanes found near ego position: [1937.3549698139368, 852.3164751610898, 0.0]
+[DEBUG] No lanes found near ego position: [1821.9793265876126, 871.2821297085363, 0.0]
+[DEBUG] No lanes found near ego position: [2343.5560874187217, 1367.6249346602328, 0.0]
+[DEBUG] No lanes found near ego position: [732.0411063618831, 1538.4621274212082, 0.0]
+[DEBUG] No lanes found near ego position: [2448.2589157043526, 2280.8056829353395, 0.0]
+[DEBUG] No lanes found near ego position: [1722.4976105227197, 1023.2707848254411, 0.0]
+[DEBUG] No lanes found near ego position: [1772.4240436762457, 866.3084047285619, 0.0]
+[DEBUG] No lanes found near ego position: [1817.3963019607731, 1153.958831204045, 0.0]
+[DEBUG] No lanes found near ego position: [1991.3851131671427, 875.190664825074, 0.0]
+[DEBUG] No lanes found near ego position: [1108.5477795580862, 1190.206590272393, 0.0]
+[DEBUG] No lanes found near ego position: [1209.8701920477442, 1369.098800307971, 0.0]
+[DEBUG] No lanes found near ego position: [817.3939917420769, 508.02746568572286, 0.0]
+[DEBUG] No lanes found near ego position: [2044.2335244654244, 973.5798791885456, 0.0]
+[DEBUG] No lanes found near ego position: [1565.7428196153805, 842.7236055241377, 0.0]
+[DEBUG] No lanes found near ego position: [617.1611455217134, 1818.0829076793095, 0.0]
+[DEBUG] No lanes found near ego position: [893.8299591390578, 334.7311148275326, 0.0]
+[DEBUG] No lanes found near ego position: [1185.1258501689256, 1134.88992347693, 0.0]
+[DEBUG] No lanes found near ego position: [1341.8428461264616, 1016.3983351984888, 0.0]
+[DEBUG] No lanes found near ego position: [1316.8862283817452, 1038.0151985835314, 0.0]
+[DEBUG] No lanes found near ego position: [1100.7396388682814, 1508.9203525612918, 0.0]
+[DEBUG] No lanes found near ego position: [1150.5245928831273, 873.1321910431196, 0.0]
+[DEBUG] No lanes found near ego position: [1409.6650479210944, 1260.2258851750698, 0.0]
+[DEBUG] No lanes found near ego position: [1188.2073234425425, 1399.0903896833217, 0.0]
+[DEBUG] No lanes found near ego position: [1863.5566520001544, 785.2893254908975, 0.0]
+[DEBUG] No lanes found near ego position: [1784.6163734946006, 1129.6797164304764, 0.0]
+[DEBUG] No lanes found near ego position: [1187.2880895215828, 921.4396160285642, 0.0]
+[DEBUG] No lanes found near ego position: [1789.6859983911038, 1135.152257895582, 0.0]
+[DEBUG] No lanes found near ego position: [1464.2795128545918, 1459.6200827522835, 0.0]
+[DEBUG] No lanes found near ego position: [1664.7456304398017, 1255.8802588784092, 0.0]
+[DEBUG] No lanes found near ego position: [2100.04237886563, 786.2301332045525, 0.0]
+[DEBUG] No lanes found near ego position: [1828.360901342253, 1010.3610355790858, 0.0]
+[DEBUG] No lanes found near ego position: [1194.2681835268468, 1128.274391250278, 0.0]
+[DEBUG] No lanes found near ego position: [1372.8594785826929, 989.0130836086589, 0.0]
+[DEBUG] No lanes found near ego position: [1233.4862238706214, 1366.8337902047424, 0.0]
+[DEBUG] No lanes found near ego position: [2121.620439669477, 889.1157437187856, 0.0]
+[DEBUG] No lanes found near ego position: [1420.0215791305254, 1254.170602291638, 0.0]
+[DEBUG] No lanes found near ego position: [1192.639000724087, 1393.321302113828, 0.0]
+[DEBUG] No lanes found near ego position: [725.1721953104188, 462.5619398407284, 0.0]
+[DEBUG] No lanes found near ego position: [904.1822544939341, 346.40068067995696, 0.0]
+[DEBUG] No lanes found near ego position: [1153.7524010213137, 1741.1829262903411, 0.0]
+[DEBUG] No lanes found near ego position: [1872.4526104600543, 1071.7208936268912, 0.0]
+[DEBUG] No lanes found near ego position: [1566.3001382674083, 843.2435819314504, 0.0]
+[DEBUG] No lanes found near ego position: [737.9154885137659, 1533.8024038405051, 0.0]
+[DEBUG] No lanes found near ego position: [2272.416891101448, 868.1594821789523, 0.0]
+[DEBUG] No lanes found near ego position: [1224.58200720266, 1521.1666424748892, 0.0]
+[DEBUG] No lanes found near ego position: [1563.1740522808766, 840.0703294023998, 0.0]
+[DEBUG] No lanes found near ego position: [2072.2291146438874, 876.985573323889, 0.0]
+[DEBUG] No lanes found near ego position: [1937.3872928994588, 861.1154692914372, 0.0]
+[DEBUG] No lanes found near ego position: [429.2359311457453, 826.2407796799744, 0.0]
+[DEBUG] No lanes found near ego position: [1719.5410162541716, 2668.0048874846148, 0.0]
+[DEBUG] No lanes found near ego position: [2262.6841402422283, 881.4292580800835, 0.0]
+[DEBUG] No lanes found near ego position: [1790.5725345393334, 965.6791461822816, 0.0]
+[DEBUG] No lanes found near ego position: [1777.2356018688179, 914.8183915340048, 0.0]
+[DEBUG] No lanes found near ego position: [2447.016992451708, 881.3114894802934, 0.0]
+[DEBUG] No lanes found near ego position: [1737.5554250348923, 1235.6525078346106, 0.0]
+[DEBUG] No lanes found near ego position: [1098.5039638779797, 2749.373751171933, 0.0]
+[DEBUG] No lanes found near ego position: [1461.634517358905, 1468.0047368750359, 0.0]
+[DEBUG] No lanes found near ego position: [601.1562990231118, 569.1149446495008, 0.0]
+[DEBUG] No lanes found near ego position: [1143.462126704926, 1391.772378235002, 0.0]
+[DEBUG] No lanes found near ego position: [2043.3999760310148, 2325.1101678804, 0.0]
+[DEBUG] No lanes found near ego position: [1368.0051027212112, 1296.5269923656306, 0.0]
+[DEBUG] No lanes found near ego position: [812.8580722462855, 518.2276725551944, 0.0]
+[DEBUG] No lanes found near ego position: [1301.203357099932, 896.073128700031, 0.0]
+[DEBUG] No lanes found near ego position: [2203.08230596441, 2574.005259257174, 0.0]
+[DEBUG] No lanes found near ego position: [1463.7233085731682, 3072.8490723608475, 0.0]
+[DEBUG] No lanes found near ego position: [1816.2287189849314, 1492.657080652829, 0.0]
+[DEBUG] No lanes found near ego position: [2146.03583649828, 1401.899830200962, 0.0]
 [DEBUG] No lanes found near ego position: [696.481609620728, 1677.524120336684, 0.0]
 [DEBUG] No lanes found near ego position: [741.8512733186844, 1530.8798872155885, 0.0]
 [DEBUG] No lanes found near ego position: [1114.7838226452845, 1589.1284225315628, 0.0]
@@ -137,6 +313,43 @@ Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No la
 [DEBUG] No lanes found near ego position: [1347.7693665158251, 1473.4890141871788, 0.0]
 [DEBUG] No lanes found near ego position: [1468.0126863367755, 1408.910141617876, 0.0]
 [DEBUG] No lanes found near ego position: [1468.5755780758814, 1408.8495842503526, 0.0]
+[DEBUG] No lanes found near ego position: [1325.0349258988065, 1102.3165183598812, 0.0]
+[DEBUG] No lanes found near ego position: [1236.6507006962584, 997.1128806383613, 0.0]
+[DEBUG] No lanes found near ego position: [750.9568410553911, 569.8419103692459, 0.0]
+[DEBUG] No lanes found near ego position: [507.90058216215584, 785.2736450593233, 0.0]
+[DEBUG] No lanes found near ego position: [1103.8415488364885, 1352.8133459959045, 0.0]
+[DEBUG] No lanes found near ego position: [1213.844697173049, 1347.4902734527006, 0.0]
+[DEBUG] No lanes found near ego position: [1304.754851254319, 1253.2473152409166, 0.0]
+[DEBUG] No lanes found near ego position: [1722.1013927384486, 961.9369153228868, 0.0]
+[DEBUG] No lanes found near ego position: [1762.290575832974, 921.6974863646678, 0.0]
+[DEBUG] No lanes found near ego position: [1121.6669181914544, 1342.124439132646, 0.0]
+[DEBUG] No lanes found near ego position: [732.5318104204882, 1542.2479914065234, 0.0]
+[DEBUG] No lanes found near ego position: [477.9496225475568, 2001.8298227541607, 0.0]
+[DEBUG] No lanes found near ego position: [352.8730521014518, 1866.2101143516606, 0.0]
+[DEBUG] No lanes found near ego position: [660.1204729787391, 1623.3365977692747, 0.0]
+[DEBUG] No lanes found near ego position: [1033.857121538707, 1728.5689500913056, 0.0]
+[DEBUG] No lanes found near ego position: [1164.5163616298892, 1657.97154741978, 0.0]
+[DEBUG] No lanes found near ego position: [1434.3331640845877, 1533.1431728709344, 0.0]
+[DEBUG] No lanes found near ego position: [1355.5038716099841, 1582.168604636474, 0.0]
+[DEBUG] No lanes found near ego position: [1240.3200325520347, 1636.1147962345797, 0.0]
+[DEBUG] No lanes found near ego position: [1103.5385563428035, 1692.7994191180205, 0.0]
+[DEBUG] No lanes found near ego position: [365.38537860038764, 1917.0080672318543, 0.0]
+[DEBUG] No lanes found near ego position: [1539.2143340609596, 1408.6129939916068, 0.0]
+[DEBUG] No lanes found near ego position: [1529.9371643082413, 1260.961211121996, 0.0]
+[DEBUG] No lanes found near ego position: [1603.2145797575565, 1194.450027052144, 0.0]
+[DEBUG] No lanes found near ego position: [1850.2153092456572, 1245.6952940401618, 0.0]
+[DEBUG] No lanes found near ego position: [1918.7880990892515, 1145.7496998622414, 0.0]
+[DEBUG] No lanes found near ego position: [1785.62550175258, 1198.5189375050766, 0.0]
+[DEBUG] No lanes found near ego position: [1738.5434222080685, 1161.9280966632043, 0.0]
+[DEBUG] No lanes found near ego position: [1870.3286322152405, 1013.3449967177057, 0.0]
+[DEBUG] No lanes found near ego position: [1634.5652402302962, 1181.1361028058316, 0.0]
+[DEBUG] No lanes found near ego position: [1536.4367183815166, 1211.1395281150167, 0.0]
+[DEBUG] No lanes found near ego position: [1526.5345819509043, 1212.9245482527294, 0.0]
+[DEBUG] No lanes found near ego position: [1459.8056501268607, 1107.3903099866347, 0.0]
+[DEBUG] No lanes found near ego position: [1331.6697236642472, 916.0500690422614, 0.0]
+[DEBUG] No lanes found near ego position: [1331.449205174537, 915.7830496365232, 0.0]
+[DEBUG] No lanes found near ego position: [1322.468267509416, 904.5793421006633, 0.0]
+[DEBUG] No lanes found near ego position: [1321.5640015100971, 903.8611617104755, 0.0]
 [DEBUG] No lanes found near ego position: [1220.7923088336465, 2793.417467842896, 0.0]
 [DEBUG] No lanes found near ego position: [1356.8854522892211, 2679.3384392705157, 0.0]
 [DEBUG] No lanes found near ego position: [1596.7826747382867, 2483.0602915920867, 0.0]
@@ -171,11 +384,75 @@ Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No la
 [DEBUG] No lanes found near ego position: [631.796890422499, 2062.9852001411537, 0.0]
 [DEBUG] No lanes found near ego position: [772.8449721092078, 2268.327249398969, 0.0]
 [DEBUG] No lanes found near ego position: [921.2856945634733, 2484.032403613556, 0.0]
+[DEBUG] Agent encoded shape: torch.Size([16, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([16, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([16, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([16, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([16, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([16, 6, 128])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] Input features shape: torch.Size([16, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([16, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([16, 6, 3072])
+[DEBUG] Final output shape: torch.Size([16, 6, 128])
+[DEBUG] m shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] n shape: torch.Size([16, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] m_prime shape: torch.Size([16, 240, 128]), values: tensor([[ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224],
+        [ 0.0215, -0.0326,  0.0203, -0.0281,  0.0224]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.2859, 0.5066, 0.4797, 1.4157, 0.6129, 1.6175, 0.3211, 1.2951, 0.1912,
+         1.8074, 0.4517, 0.6040, 1.0506, 0.8608, 1.1552, 3.0365, 0.4025, 0.7058,
+         0.2390, 1.3548, 1.7655, 1.2889, 0.8930, 0.6965, 0.7703, 0.8811, 1.6070,
+         0.9946, 0.5357, 0.2875, 0.5148, 0.7568, 1.9036, 1.0110, 0.1283, 1.4339,
+         0.3024, 0.3913, 0.6497, 0.8503, 0.1529, 1.2125, 0.8997, 1.1274, 0.4861,
+         0.9274, 0.4051, 2.0729, 1.0552, 2.8675, 1.3550, 0.4640, 0.2690, 1.3955,
+         0.1627, 0.5405, 0.7877, 0.8888, 0.3087, 0.9650, 0.2773, 1.3854, 0.3170,
+         1.0973, 0.5575, 1.1928, 1.8948, 0.5494, 0.9322, 1.6007, 0.5198, 0.9823,
+         0.7418, 0.6303, 0.6803, 0.4796, 0.4987, 0.1166, 0.6207, 0.7658, 0.1520,
+         1.6539, 0.0336, 1.4528, 0.1543, 0.1394, 0.4581, 1.1084, 0.7352, 0.8097,
+         0.3582, 1.2453, 0.3386, 1.1560, 2.5210, 0.2482, 0.2146, 0.7823, 0.4904,
+         1.0963, 1.1597, 0.9932, 1.3028, 1.2279, 0.4098, 1.5922, 0.9976, 0.4147,
+         0.2585, 0.7971, 0.6452, 0.8502, 0.8201, 0.6471, 1.3965, 1.3557, 1.5580,
+         0.6592, 0.2795, 0.3927, 0.9489, 0.3882, 0.3708, 0.6851, 0.4137, 0.5157,
+         0.6866, 0.6902]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([16, 128, 128]), values: tensor([[ 0.5572, -0.2911,  0.6843,  1.4922, -0.8415],
+        [ 0.1753, -0.9998, -1.0858,  0.7864,  0.0416],
+        [-0.4156,  0.5428, -0.3375, -2.0033, -0.4493],
+        [ 0.2669,  0.2661,  0.3844,  1.3905,  1.1762],
+        [-0.6298,  0.4736, -0.4162, -1.0500,  0.9878]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] B_discrete shape: torch.Size([16, 128, 128]), values: tensor([[-0.3915, -0.1729, -0.6696,  0.0837,  0.7071],
+        [-0.3654,  0.9176, -0.3910, -0.8607, -0.7185],
+        [ 0.5047,  0.1441, -0.1394,  1.1858, -0.6007],
+        [ 0.2512,  0.2366, -0.5121, -1.2894,  0.4543],
+        [-0.0353, -0.0487,  0.5193, -1.8840, -0.1368]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] q_ssm shape: torch.Size([16, 240, 128]), values: tensor([[-0.3957,  0.0672,  0.0728,  0.2458, -0.1041],
+        [-0.3957,  0.0672,  0.0728,  0.2458, -0.1041]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] logits shape: torch.Size([16, 240, 6]), values: tensor([[ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562],
+        [ 0.0655,  0.0726, -0.1071, -0.1150, -0.4562]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_probabilities shape: torch.Size([16, 240, 6]), values: tensor([[0.1952, 0.1966, 0.1642, 0.1629, 0.1158],
+        [0.1952, 0.1966, 0.1642, 0.1629, 0.1158]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_predictions shape: torch.Size([16, 240]), values: tensor([1, 1, 1, 1, 1], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([16, 6, 128])
+[DEBUG] Pi shape: torch.Size([16, 6, 5])
 Error executing job with overrides: ['+task=train']
 Traceback (most recent call last):
   File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py", line 15, in main
     train_main(config)  # train_main에 DictConfig 전달
-  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 187, in train_main
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 257, in train_main
     trainer.fit(model, train_loader, val_loader)
   File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 539, in fit
     call._call_and_handle_interrupt(
@@ -185,43 +462,42 @@ Traceback (most recent call last):
     self._run(model, ckpt_path=ckpt_path)
   File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 982, in _run
     results = self._run_stage()
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1024, in _run_stage
-    self._run_sanity_check()
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1053, in _run_sanity_check
-    val_loop.run()
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
-    return loop_run(self, *args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 144, in run
-    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 433, in _evaluation_step
-    output = call._call_strategy_hook(trainer, hook_name, *step_args)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 323, in _call_strategy_hook
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1026, in _run_stage
+    self.fit_loop.run()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 216, in run
+    self.advance()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 455, in advance
+    self.epoch_loop.run(self._data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 150, in run
+    self.advance(data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 320, in advance
+    batch_output = self.automatic_optimization.run(trainer.optimizers[0], batch_idx, kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 192, in run
+    self._optimizer_step(batch_idx, closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 270, in _optimizer_step
+    call._call_lightning_module_hook(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 171, in _call_lightning_module_hook
     output = fn(*args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
-    return self.lightning_module.validation_step(*args, **kwargs)
-  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 137, in validation_step
-    mu, b, uncertainty = self(agent_inputs, lane_inputs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 79, in forward
-    sparse_features = self.sparse_encoder(agent_inputs, lane_inputs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/models/sparse_context_encoder.py", line 40, in forward
-    lane_features = self.lane_projection(lane_features)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/linear.py", line 114, in forward
-    return F.linear(input, self.weight, self.bias)
-RuntimeError: mat1 and mat2 shapes cannot be multiplied (3840x128 and 4x128)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/module.py", line 1302, in optimizer_step
+    optimizer.step(closure=optimizer_closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/optimizer.py", line 154, in step
+    step_output = self._strategy.optimizer_step(self._optimizer, closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 239, in optimizer_step
+    return self.precision_plugin.optimizer_step(optimizer, model=model, closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/plugins/precision/precision.py", line 123, in optimizer_step
+    return optimizer.step(closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/lr_scheduler.py", line 68, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 373, in wrapper
+    out = func(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 76, in _use_grad
+    ret = func(self, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/adamw.py", line 173, in step
+    self._init_group(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/adamw.py", line 125, in _init_group
+    state["exp_avg_sq"] = torch.zeros_like(
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 12.00 MiB. GPU 0 has a total capacty of 23.54 GiB of which 11.44 MiB is free. Including non-PyTorch memory, this process has 23.46 GiB memory in use. Of the allocated memory 22.61 GiB is allocated by PyTorch, and 368.63 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
 
 Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
-[1;34mwandb[0m: 🚀 View run [33mpious-vortex-160[0m at: [34mhttps://wandb.ai/imjaegyun/Traj-LLM/runs/pmk4exva[0m
-
-                                                                   
+[1;34mwandb[0m: 🚀 View run [33mdesert-deluge-166[0m at: [34mhttps://wandb.ai/imjaegyun/Traj-LLM/runs/zo8m6w5m[0m
+Epoch 0:   0%|          | 0/43 [00:17<?, ?it/s]
