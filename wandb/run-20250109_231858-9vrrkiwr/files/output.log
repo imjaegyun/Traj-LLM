@@ -1,0 +1,75 @@
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                   | Type                         | Params | Mode
+--------------------------------------------------------------------------------
+0 | sparse_encoder         | SparseContextEncoder         | 826 K  | train
+1 | high_level_model       | HighLevelInteractionModel    | 3.2 B  | train
+2 | lane_probability_model | LaneAwareProbabilityLearning | 429 K  | train
+3 | laplace_decoder        | MultimodalLaplaceDecoder     | 78.2 K | train
+4 | mamba_layer            | MambaLayer                   | 330 K  | train
+--------------------------------------------------------------------------------
+3.2 B     Trainable params
+0         Non-trainable params
+3.2 B     Total params
+12,860.818Total estimated model params size (MB)
+100       Modules in train mode
+397       Modules in eval mode
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]
+Error executing job with overrides: ['+task=train']
+Traceback (most recent call last):
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py", line 15, in main
+    train_main(config)  # train_main에 DictConfig 전달
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 187, in train_main
+    trainer.fit(model, train_loader, val_loader)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 539, in fit
+    call._call_and_handle_interrupt(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 47, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 575, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 982, in _run
+    results = self._run_stage()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1024, in _run_stage
+    self._run_sanity_check()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1053, in _run_sanity_check
+    val_loop.run()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 137, in run
+    batch, batch_idx, dataloader_idx = next(data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fetchers.py", line 134, in __next__
+    batch = super().__next__()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fetchers.py", line 61, in __next__
+    batch = next(self.iterator)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/utilities/combined_loader.py", line 341, in __next__
+    out = next(self._iterator)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/utilities/combined_loader.py", line 142, in __next__
+    out = next(self.iterators[0])
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 630, in __next__
+    data = self._next_data()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1345, in _next_data
+    return self._process_data(data)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1371, in _process_data
+    data.reraise()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/_utils.py", line 694, in reraise
+    raise exception
+RuntimeError: Caught RuntimeError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/fetch.py", line 54, in fetch
+    return self.collate_fn(data)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 265, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 127, in collate
+    return elem_type({key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem})
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 127, in <dictcomp>
+    return elem_type({key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem})
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 119, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/data/_utils/collate.py", line 162, in collate_tensor_fn
+    return torch.stack(batch, 0, out=out)
+RuntimeError: stack expects each tensor to be equal size, but got [8, 2] at entry 0 and [11, 2] at entry 1
+
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

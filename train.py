@@ -1,11 +1,11 @@
-# train.py
+# train.py 업데이트 (Hydra 버전 수정)
 import hydra
 from omegaconf import DictConfig
-from train.train_model import  train_main
+from train.train_model import train_main
 from train.evaluate_model import main as evaluate_main
 from train.hyperparam_tuning import main as tuning_main
 
-@hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
+@hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml", version_base=None)  # version_base 추가
 def main(config: DictConfig):
     # Select task based on config
     task = config.task

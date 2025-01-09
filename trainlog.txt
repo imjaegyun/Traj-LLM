@@ -1,0 +1,219 @@
+/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/evaluate_model.py:25: UserWarning: 
+The version_base parameter is not specified.
+Please specify a compatability version level, or None.
+Will assume defaults for version 1.1
+  @hydra.main(config_path="configs", config_name="traj_llm")
+/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/hyperparam_tuning.py:49: UserWarning: 
+The version_base parameter is not specified.
+Please specify a compatability version level, or None.
+Will assume defaults for version 1.1
+  @hydra.main(config_path="configs", config_name="traj_llm")
+Starting training...
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.59it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.42it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.25it/s]
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Currently logged in as: imij0522 (imjaegyun). Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.19.1
+wandb: Run data is saved locally in ./wandb/run-20250110_015944-pmk4exva
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run pious-vortex-160
+wandb: ⭐️ View project at https://wandb.ai/imjaegyun/Traj-LLM
+wandb: 🚀 View run at https://wandb.ai/imjaegyun/Traj-LLM/runs/pmk4exva
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                   | Type                         | Params | Mode 
+--------------------------------------------------------------------------------
+0 | sparse_encoder         | SparseContextEncoder         | 826 K  | train
+1 | high_level_model       | HighLevelInteractionModel    | 3.2 B  | train
+2 | lane_probability_model | LaneAwareProbabilityLearning | 429 K  | train
+3 | laplace_decoder        | MultimodalLaplaceDecoder     | 78.2 K | train
+4 | mamba_layer            | MambaLayer                   | 330 K  | train
+--------------------------------------------------------------------------------
+3.2 B     Trainable params
+0         Non-trainable params
+3.2 B     Total params
+12,860.818Total estimated model params size (MB)
+100       Modules in train mode
+397       Modules in eval mode
+======
+Loading NuScenes tables for version v1.0-trainval...
+23 category,
+8 attribute,
+4 visibility,
+64386 instance,
+12 sensor,
+10200 calibrated_sensor,
+2631083 ego_pose,
+68 log,
+850 scene,
+34149 sample,
+2631083 sample_data,
+1166187 sample_annotation,
+4 map,
+Done loading in 23.386 seconds.
+======
+Reverse indexing ...
+Done reverse indexing in 5.5 seconds.
+======
+======
+Loading NuScenes tables for version v1.0-trainval...
+23 category,
+8 attribute,
+4 visibility,
+64386 instance,
+12 sensor,
+10200 calibrated_sensor,
+2631083 ego_pose,
+68 log,
+850 scene,
+34149 sample,
+2631083 sample_data,
+1166187 sample_annotation,
+4 map,
+Done loading in 26.495 seconds.
+======
+Reverse indexing ...
+Done reverse indexing in 5.5 seconds.
+======
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No lanes found near ego position: [1325.0349258988065, 1102.3165183598812, 0.0]
+[DEBUG] No lanes found near ego position: [1236.6507006962584, 997.1128806383613, 0.0]
+[DEBUG] No lanes found near ego position: [750.9568410553911, 569.8419103692459, 0.0]
+[DEBUG] No lanes found near ego position: [507.90058216215584, 785.2736450593233, 0.0]
+[DEBUG] No lanes found near ego position: [1103.8415488364885, 1352.8133459959045, 0.0]
+[DEBUG] No lanes found near ego position: [1213.844697173049, 1347.4902734527006, 0.0]
+[DEBUG] No lanes found near ego position: [1304.754851254319, 1253.2473152409166, 0.0]
+[DEBUG] No lanes found near ego position: [1722.1013927384486, 961.9369153228868, 0.0]
+[DEBUG] No lanes found near ego position: [1762.290575832974, 921.6974863646678, 0.0]
+[DEBUG] No lanes found near ego position: [1121.6669181914544, 1342.124439132646, 0.0]
+[DEBUG] No lanes found near ego position: [732.5318104204882, 1542.2479914065234, 0.0]
+[DEBUG] No lanes found near ego position: [477.9496225475568, 2001.8298227541607, 0.0]
+[DEBUG] No lanes found near ego position: [352.8730521014518, 1866.2101143516606, 0.0]
+[DEBUG] No lanes found near ego position: [660.1204729787391, 1623.3365977692747, 0.0]
+[DEBUG] No lanes found near ego position: [1033.857121538707, 1728.5689500913056, 0.0]
+[DEBUG] No lanes found near ego position: [1164.5163616298892, 1657.97154741978, 0.0]
+[DEBUG] No lanes found near ego position: [1434.3331640845877, 1533.1431728709344, 0.0]
+[DEBUG] No lanes found near ego position: [1355.5038716099841, 1582.168604636474, 0.0]
+[DEBUG] No lanes found near ego position: [1240.3200325520347, 1636.1147962345797, 0.0]
+[DEBUG] No lanes found near ego position: [1103.5385563428035, 1692.7994191180205, 0.0]
+[DEBUG] No lanes found near ego position: [365.38537860038764, 1917.0080672318543, 0.0]
+[DEBUG] No lanes found near ego position: [696.481609620728, 1677.524120336684, 0.0]
+[DEBUG] No lanes found near ego position: [741.8512733186844, 1530.8798872155885, 0.0]
+[DEBUG] No lanes found near ego position: [1114.7838226452845, 1589.1284225315628, 0.0]
+[DEBUG] No lanes found near ego position: [1214.3271575042058, 1525.4149957233403, 0.0]
+[DEBUG] No lanes found near ego position: [1341.1700198733529, 1448.8251791109528, 0.0]
+[DEBUG] No lanes found near ego position: [1488.8756247083804, 1366.7740485943527, 0.0]
+[DEBUG] No lanes found near ego position: [1465.996683638767, 1303.5675359986544, 0.0]
+[DEBUG] No lanes found near ego position: [1418.7928799642768, 1217.945890562158, 0.0]
+[DEBUG] No lanes found near ego position: [693.5387040099376, 3297.9240638856163, 0.0]
+[DEBUG] No lanes found near ego position: [863.1701329330142, 2870.6618947951347, 0.0]
+[DEBUG] No lanes found near ego position: [915.8854112484112, 2822.437095253009, 0.0]
+[DEBUG] No lanes found near ego position: [780.9576901504572, 2793.5525231751135, 0.0]
+[DEBUG] No lanes found near ego position: [782.0185495587102, 2591.9101675749953, 0.0]
+[DEBUG] No lanes found near ego position: [776.7433308127252, 2503.2683734169577, 0.0]
+[DEBUG] No lanes found near ego position: [789.8219404978504, 2456.6988177479566, 0.0]
+[DEBUG] No lanes found near ego position: [814.2547749744208, 2366.325300970668, 0.0]
+[DEBUG] No lanes found near ego position: [639.2532102859709, 2180.562599873819, 0.0]
+[DEBUG] No lanes found near ego position: [1216.9840759033618, 2792.731241800078, 0.0]
+[DEBUG] No lanes found near ego position: [1167.819247161555, 2834.147878288856, 0.0]
+[DEBUG] No lanes found near ego position: [1058.620307226702, 2678.351146372065, 0.0]
+[DEBUG] No lanes found near ego position: [931.7365413746172, 2491.2491056599433, 0.0]
+[DEBUG] No lanes found near ego position: [742.7511524752899, 2217.335265719575, 0.0]
+[DEBUG] No lanes found near ego position: [623.88217133984, 2039.560558661746, 0.0]
+[DEBUG] No lanes found near ego position: [1038.8663091741787, 2648.356282537352, 0.0]
+[DEBUG] No lanes found near ego position: [869.4153831081921, 2400.2551663756412, 0.0]
+[DEBUG] No lanes found near ego position: [694.7106529319883, 2146.605442789754, 0.0]
+[DEBUG] No lanes found near ego position: [608.8587510330312, 2011.0522203242867, 0.0]
+[DEBUG] No lanes found near ego position: [1039.8803835233703, 1638.1687849476784, 0.0]
+[DEBUG] No lanes found near ego position: [1191.963032142129, 1583.6697347634827, 0.0]
+[DEBUG] No lanes found near ego position: [1347.7693665158251, 1473.4890141871788, 0.0]
+[DEBUG] No lanes found near ego position: [1468.0126863367755, 1408.910141617876, 0.0]
+[DEBUG] No lanes found near ego position: [1468.5755780758814, 1408.8495842503526, 0.0]
+[DEBUG] No lanes found near ego position: [1220.7923088336465, 2793.417467842896, 0.0]
+[DEBUG] No lanes found near ego position: [1356.8854522892211, 2679.3384392705157, 0.0]
+[DEBUG] No lanes found near ego position: [1596.7826747382867, 2483.0602915920867, 0.0]
+[DEBUG] No lanes found near ego position: [1878.8821328489337, 2588.497321483532, 0.0]
+[DEBUG] No lanes found near ego position: [2028.166641345691, 2596.113891880654, 0.0]
+[DEBUG] No lanes found near ego position: [2378.997734122783, 2401.1145017479557, 0.0]
+[DEBUG] No lanes found near ego position: [2443.482110624879, 2246.6188162927233, 0.0]
+[DEBUG] No lanes found near ego position: [2454.9882972396026, 2028.7592021171163, 0.0]
+[DEBUG] No lanes found near ego position: [2450.601176502486, 2074.2105331518305, 0.0]
+[DEBUG] No lanes found near ego position: [2264.6608895026393, 2381.2279527299434, 0.0]
+[DEBUG] No lanes found near ego position: [2155.2368527549565, 2474.783470733097, 0.0]
+[DEBUG] No lanes found near ego position: [1940.8986482298644, 2604.437183922613, 0.0]
+[DEBUG] No lanes found near ego position: [1644.6038264635442, 2494.9370276979853, 0.0]
+[DEBUG] No lanes found near ego position: [1560.0708054479412, 2508.6963176986956, 0.0]
+[DEBUG] No lanes found near ego position: [1414.1848764824051, 2628.34517696465, 0.0]
+[DEBUG] No lanes found near ego position: [1279.2910062988497, 2740.5494949176323, 0.0]
+[DEBUG] No lanes found near ego position: [677.8661806194584, 1601.7581118361893, 0.0]
+[DEBUG] No lanes found near ego position: [582.4796557245519, 1778.5246981288, 0.0]
+[DEBUG] No lanes found near ego position: [386.2480734647504, 1987.3605886633723, 0.0]
+[DEBUG] No lanes found near ego position: [527.042104044214, 2033.2874149921263, 0.0]
+[DEBUG] No lanes found near ego position: [595.6931821612304, 2105.7216858619213, 0.0]
+[DEBUG] No lanes found near ego position: [658.046587775478, 2201.2272314404636, 0.0]
+[DEBUG] No lanes found near ego position: [761.788470372654, 2303.6623562697487, 0.0]
+[DEBUG] No lanes found near ego position: [779.8658069133662, 2337.265360798851, 0.0]
+[DEBUG] No lanes found near ego position: [786.7502841334915, 2366.1360540867277, 0.0]
+[DEBUG] No lanes found near ego position: [743.5563451250935, 3081.3385339785436, 0.0]
+[DEBUG] No lanes found near ego position: [694.3049660850445, 1906.4851895133245, 0.0]
+[DEBUG] No lanes found near ego position: [625.9338691298814, 1972.088558810015, 0.0]
+[DEBUG] No lanes found near ego position: [625.9115752464636, 1972.1418105014243, 0.0]
+[DEBUG] No lanes found near ego position: [618.8657348078582, 1978.665382212529, 0.0]
+[DEBUG] No lanes found near ego position: [618.179355904422, 1979.2888516105386, 0.0]
+[DEBUG] No lanes found near ego position: [631.796890422499, 2062.9852001411537, 0.0]
+[DEBUG] No lanes found near ego position: [772.8449721092078, 2268.327249398969, 0.0]
+[DEBUG] No lanes found near ego position: [921.2856945634733, 2484.032403613556, 0.0]
+Error executing job with overrides: ['+task=train']
+Traceback (most recent call last):
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py", line 15, in main
+    train_main(config)  # train_main에 DictConfig 전달
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 187, in train_main
+    trainer.fit(model, train_loader, val_loader)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 539, in fit
+    call._call_and_handle_interrupt(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 47, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 575, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 982, in _run
+    results = self._run_stage()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1024, in _run_stage
+    self._run_sanity_check()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1053, in _run_sanity_check
+    val_loop.run()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 144, in run
+    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 433, in _evaluation_step
+    output = call._call_strategy_hook(trainer, hook_name, *step_args)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 323, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
+    return self.lightning_module.validation_step(*args, **kwargs)
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 137, in validation_step
+    mu, b, uncertainty = self(agent_inputs, lane_inputs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 79, in forward
+    sparse_features = self.sparse_encoder(agent_inputs, lane_inputs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/models/sparse_context_encoder.py", line 40, in forward
+    lane_features = self.lane_projection(lane_features)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/nn/modules/linear.py", line 114, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (3840x128 and 4x128)
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+[1;34mwandb[0m: 🚀 View run [33mpious-vortex-160[0m at: [34mhttps://wandb.ai/imjaegyun/Traj-LLM/runs/pmk4exva[0m
+                                                                   

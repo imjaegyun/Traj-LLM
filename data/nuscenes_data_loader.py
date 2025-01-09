@@ -2,23 +2,26 @@
 import os
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from nuscenes.nuscenes import NuScenes
+from nuscenes.map_expansion.map_api import NuScenesMap
 
 class NuscenesDataset(Dataset):
-    def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', transform=None, target_length=15):
+    def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', target_length=240):
         """
-        NuscenesDataset 초기화
+        Args:
+            nuscenes_path (str): NuScenes 데이터셋이 위치한 폴더 경로
+            version (str): NuScenes 버전 (예: 'v1.0-trainval')
+            split (str): 'train' 또는 'val'
+            target_length (int): 예측하고자 하는 미래 프레임(샘플) 수
         """
-        self.nusc = NuScenes(version=version, dataroot=nuscenes_path, verbose=True)
-        self.split = split
-        self.transform = transform
+        self.output_length = 6
         self.target_length = target_length
+        self.nusc = NuScenes(version=version, dataroot=nuscenes_path, verbose=True)
+        self.nusc_map = NuScenesMap(dataroot=nuscenes_path, map_name="singapore-onenorth")
+        self.split = split
 
-        # 모든 scene 로드 및 split 설정
         all_scenes = self.nusc.scene
-        print(f"Total scenes in dataset: {len(all_scenes)}")
-
         train_split = set(range(0, int(0.8 * len(all_scenes))))
         val_split = set(range(int(0.8 * len(all_scenes)), len(all_scenes)))
 
@@ -29,11 +32,6 @@ class NuscenesDataset(Dataset):
         else:
             raise ValueError(f"Invalid split '{split}'. Choose 'train' or 'val'.")
 
-        print(f"Found {len(self.scenes)} scenes for split '{split}'")
-
-        if len(self.scenes) == 0:
-            raise ValueError(f"No scenes found for split '{split}'. Check dataset path and split configuration.")
-
     def __len__(self):
         return len(self.scenes)
 
@@ -43,102 +41,128 @@ class NuscenesDataset(Dataset):
         sample = self.nusc.get('sample', first_sample_token)
 
         try:
-            # Extract features
-            agent_features = self._extract_agent_features(sample)
+            agent_state = self._extract_agent_state(sample)
             lane_features = self._extract_lane_features(sample)
-
-            # Target trajectory points 및 lane labels 생성 (Mock 데이터)
-            target_trajectory = self._generate_mock_trajectory()
-            lane_label = self._generate_mock_lane_label()
-
-            if self.transform:
-                agent_features = self.transform(agent_features)
-                lane_features = self.transform(lane_features)
+            trajectory_points = self._extract_trajectory_points(sample)
 
             return {
-                'agent_features': torch.tensor(agent_features, dtype=torch.float32),
+                'agent_features': torch.tensor(agent_state, dtype=torch.float32),
                 'lane_features': torch.tensor(lane_features, dtype=torch.float32),
-                'trajectory_points': torch.tensor(target_trajectory, dtype=torch.float32),
-                'lane_labels': torch.tensor(lane_label, dtype=torch.long)
+                'trajectory_points': torch.tensor(trajectory_points, dtype=torch.float32),
             }
-
-        except KeyError as e:
-            print(f"[ERROR] Missing key in sample data: {e}. Returning default values.")
+        except Exception as e:
+            print(f"[ERROR] Failed to process sample {idx}: {e}. Returning default values.")
             return self._get_default_sample()
 
-    def _extract_agent_features(self, sample):
-        """
-        샘플에서 agent 특징 추출
-        """
-        features = np.random.rand(10, 128)  # Mocked: 10 time steps, 128 features
-        return self._pad_or_truncate(features, self.target_length)
-
     def _extract_lane_features(self, sample):
-        """
-        샘플에서 lane 특징 추출
-        """
-        features = np.random.rand(15, 128)  # Mocked: 15 lanes, 128 features
-        return self._pad_or_truncate(features, self.target_length)
+        try:
+            sample_data = self.nusc.get('sample_data', sample['data']['LIDAR_TOP'])
+            ego_pose = self.nusc.get('ego_pose', sample_data['ego_pose_token'])
 
-    def _pad_or_truncate(self, features, target_length):
-        """
-        시퀀스 데이터를 패딩하거나 자릅니다.
-        """
-        current_length = features.shape[0]
-        if current_length < target_length:
-            padding = np.zeros((target_length - current_length, features.shape[1]))
-            features = np.vstack((features, padding))
-        elif current_length > target_length:
-            features = features[:target_length]
-        return features
+            ego_x, ego_y = ego_pose['translation'][0], ego_pose['translation'][1]
 
-    def _generate_mock_trajectory(self):
-        """
-        Mock 궤적 데이터를 생성합니다.
-        """
-        return np.random.rand(self.target_length, 2)  # [target_length, 2]
+            # NuScenesMap API를 사용하여 반경 30m 내 차선 검색
+            lanes_in_radius = self.nusc_map.get_records_in_radius(
+                ego_x, ego_y, 30.0, ['lane']
+            )
 
-    def _generate_mock_lane_label(self):
+            if not lanes_in_radius['lane']:
+                print(f"[DEBUG] No lanes found near ego position: {ego_pose['translation']}")
+                return np.zeros((self.target_length, 128))
+
+            lane_features = []
+            for lane_token in lanes_in_radius['lane']:
+                lane_record = self.nusc_map.get('lane', lane_token)
+                width = lane_record.get('width', 0.0)
+                length = lane_record.get('length', 0.0)
+                lane_features.append([width, length])
+
+            lane_features = np.array(lane_features)
+
+            # 차원 변환: (N, 2) -> (self.target_length, 128)
+            lane_features = np.pad(lane_features, ((0, max(0, self.target_length - lane_features.shape[0])), (0, 126)), mode='constant')
+            lane_features = lane_features[:self.target_length, :128]
+
+            return lane_features
+
+        except Exception as e:
+            print(f"[ERROR] Failed to extract lane features: {e}. Using zeros.")
+            return np.zeros((self.target_length, 128))
+
+    def _extract_agent_state(self, sample):
+        try:
+            trajectory = []
+            velocity = []
+
+            current_sample = sample
+            for _ in range(self.output_length):
+                sd_rec = self.nusc.get('sample_data', current_sample['data']['LIDAR_TOP'])
+                ego_pose = self.nusc.get('ego_pose', sd_rec['ego_pose_token'])
+
+                x, y = ego_pose['translation'][:2]
+                trajectory.append([x, y])
+
+                if current_sample['next'] != "":
+                    next_sample = self.nusc.get('sample', current_sample['next'])
+                    next_sd_rec = self.nusc.get('sample_data', next_sample['data']['LIDAR_TOP'])
+                    next_pose = self.nusc.get('ego_pose', next_sd_rec['ego_pose_token'])
+
+                    dt = (next_pose['timestamp'] - ego_pose['timestamp']) / 1e6
+                    nx, ny = next_pose['translation'][:2]
+                    vx = (nx - x) / dt
+                    vy = (ny - y) / dt
+                else:
+                    vx, vy = 0.0, 0.0
+
+                velocity.append([vx, vy])
+
+                if current_sample['next'] != "":
+                    current_sample = self.nusc.get('sample', current_sample['next'])
+                else:
+                    break
+
+            trajectory = np.array(trajectory)
+            velocity = np.array(velocity)
+
+            if len(trajectory) < self.output_length:
+                last_traj = trajectory[-1].copy()
+                last_vel = velocity[-1].copy()
+                diff = self.output_length - len(trajectory)
+                trajectory = np.concatenate([trajectory, np.tile(last_traj, (diff, 1))], axis=0)
+                velocity = np.concatenate([velocity, np.tile(last_vel, (diff, 1))], axis=0)
+
+            agent_state = np.hstack((trajectory, velocity))
+            return agent_state
+
+        except Exception as e:
+            print(f"[ERROR] Failed to extract agent state: {e}. Using zeros.")
+            return np.zeros((self.output_length, 4))
+
+    def _extract_trajectory_points(self, sample):
         """
-        Mock lane label을 생성합니다.
+        실제 미래 궤적 (ego) 위치를 self.target_length 프레임만큼 추출.
         """
-        return np.random.randint(0, 6, size=(self.target_length,))  # [target_length]
+        points = []
+        current_sample = sample
+        for _ in range(self.target_length):
+            sd_rec = self.nusc.get('sample_data', current_sample['data']['LIDAR_TOP'])
+            ego_pose = self.nusc.get('ego_pose', sd_rec['ego_pose_token'])
 
-    def _get_default_sample(self):
-        """
-        기본값을 반환합니다.
-        """
-        return {
-            'agent_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
-            'lane_features': torch.zeros((self.target_length, 128), dtype=torch.float32),
-            'trajectory_points': torch.zeros((self.target_length, 2), dtype=torch.float32),
-            'lane_labels': torch.zeros((self.target_length,), dtype=torch.long)
-        }
+            x, y = ego_pose['translation'][:2]
+            points.append([x, y])
 
-# Example usage
-if __name__ == "__main__":
-    nuscenes_path = "/home/user/data/Nuscenes"
-    version = 'v1.0-trainval'
-    split = 'train'
-
-    try:
-        print("Creating dataset...")
-        dataset = NuscenesDataset(nuscenes_path=nuscenes_path, version=version, split=split)
-        dataloader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=4)
-
-        print("Iterating through the dataset...")
-        for i, batch in enumerate(dataloader):
-            print(f"Batch {i}:")
-            print(f"  Agent features shape: {batch['agent_features'].shape}")
-            print(f"  Lane features shape: {batch['lane_features'].shape}")
-            print(f"  Trajectory points shape: {batch['trajectory_points'].shape}")
-            print(f"  Lane labels shape: {batch['lane_labels'].shape}")
-
-            if i == 2:
+            if current_sample['next'] == "":
+                # 더 이상 다음이 없으면 중단
                 break
+            else:
+                current_sample = self.nusc.get('sample', current_sample['next'])
 
-    except ValueError as e:
-        print(f"Dataset Error: {e}")
-    except Exception as e:
-        print(f"Unexpected Error: {e}")
+        # 부족하면 마지막 위치로 패딩
+        if len(points) < self.target_length:
+            last_xy = points[-1]
+            diff = self.target_length - len(points)
+            for _ in range(diff):
+                points.append(last_xy)
+
+        return np.array(points)
 

@@ -1,3 +1,4 @@
+# models/lane_aware_probability_learning.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -30,6 +31,9 @@ class LaneAwareProbabilityLearning(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.instance_norm = nn.InstanceNorm1d(hidden_dim)
 
+        # Linear for selective state-space model output
+        self.linear_q = nn.Linear(hidden_dim, hidden_dim)
+
         # Output layers
         self.mlp = nn.Linear(hidden_dim, num_lanes)
 
@@ -39,54 +43,39 @@ class LaneAwareProbabilityLearning(nn.Module):
         # Linear projections and non-linearity
         m = self.linear_m(lane_inputs)  # Shape: (B, L, hidden_dim)
         n = self.linear_n(lane_inputs)  # Shape: (B, L, hidden_dim)
-        m_prime = F.silu(self.conv1d(m.transpose(1, 2))).transpose(1, 2)  # Shape: (B, L, hidden_dim)
+        print(f"[DEBUG] m shape: {m.shape}, values: {m[0, :2, :5]}")  # 첫 2개 행, 5개 열 출력
+        print(f"[DEBUG] n shape: {n.shape}, values: {n[0, :2, :5]}")
 
-        # Pass through Mamba Layer
-        q = self.mamba_layer(m_prime)  # Shape: (B, L, hidden_dim)
+        m_prime = F.silu(self.conv1d(m.transpose(1, 2))).transpose(1, 2)  # Shape: (B, L, hidden_dim)
+        print(f"[DEBUG] m_prime shape: {m_prime.shape}, values: {m_prime[0, :2, :5]}")
 
         # Structured state-space model (SSM) matrices
         A = self.state_matrix_a
         B = self.state_matrix_b
-        C = self.state_matrix_c
 
-        # Discretization of the matrices
-        delta = F.softplus(self.delta_param).unsqueeze(0).unsqueeze(0)  # Shape: (1, 1, hidden_dim)
-        A_discrete = A * delta
-        B_discrete = B * delta
+        delta = F.softplus(self.delta_param).detach().unsqueeze(0).unsqueeze(0)
+        print(f"[DEBUG] Delta shape: {delta.shape}, values: {delta[0, :5]}")  # delta 값 출력
+
+        A_discrete = (A * delta).to(lane_inputs.device)
+        B_discrete = (B * delta).to(lane_inputs.device)
+
+        print(f"[DEBUG] A_discrete shape: {A_discrete.shape}, values: {A_discrete[:5, :5]}")
+        print(f"[DEBUG] B_discrete shape: {B_discrete.shape}, values: {B_discrete[:5, :5]}")
 
         # Selective state-space model computations
-        q_ssm = torch.bmm(A_discrete.expand(B, -1, -1), q) + torch.bmm(B_discrete.expand(B, -1, -1), n)
-        q_ssm = F.silu(q_ssm)
+        q_ssm = torch.bmm(A_discrete, m_prime.transpose(1, 2)) + torch.bmm(B_discrete, n.transpose(1, 2))
+        q_ssm = q_ssm.transpose(1, 2)  # Shape: (B, L, hidden_dim)
+        print(f"[DEBUG] q_ssm shape: {q_ssm.shape}, values: {q_ssm[0, :2, :5]}")
 
-        # Cross-Attention
-        cross_attended, _ = self.cross_attention(q_ssm, high_level_features, high_level_features)
-
-        # Normalization and dropout
-        q_final = self.instance_norm(self.dropout(cross_attended.transpose(1, 2))).transpose(1, 2)  # Shape: (B, L, hidden_dim)
-
-        # Probability computation
-        logits = self.mlp(q_final)  # Shape: (B, L, num_lanes)
+        # Process `q_ssm` through additional layers
+        q = F.silu(self.linear_q(q_ssm))  # Shape: (B, L, hidden_dim)
+        logits = self.mlp(q)  # Shape: (B, L, num_lanes)
         lane_probabilities = F.softmax(logits, dim=-1)  # Shape: (B, L, num_lanes)
+        print(f"[DEBUG] logits shape: {logits.shape}, values: {logits[0, :2, :5]}")
+        print(f"[DEBUG] lane_probabilities shape: {lane_probabilities.shape}, values: {lane_probabilities[0, :2, :5]}")
 
         # Lane predictions
         lane_predictions = torch.argmax(lane_probabilities, dim=-1)  # Shape: (B, L)
+        print(f"[DEBUG] lane_predictions shape: {lane_predictions.shape}, values: {lane_predictions[0, :5]}")
 
         return lane_probabilities, lane_predictions
-
-# Example Usage
-if __name__ == "__main__":
-    batch_size = 4
-    num_lanes = 5
-    seq_len = 10
-    agent_dim = 128
-    lane_dim = 128
-    hidden_dim = 256
-    num_mamba_blocks = 3
-
-    model = LaneAwareProbabilityLearning(agent_dim, lane_dim, hidden_dim, num_lanes, num_mamba_blocks)
-    high_level_features = torch.rand(batch_size, seq_len, hidden_dim)
-    lane_inputs = torch.rand(batch_size, seq_len, lane_dim)
-
-    lane_probabilities, lane_predictions = model(high_level_features, lane_inputs)
-    print(f"Lane Probabilities Shape: {lane_probabilities.shape}")
-    print(f"Lane Predictions Shape: {lane_predictions.shape}")

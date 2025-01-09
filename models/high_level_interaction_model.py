@@ -40,16 +40,20 @@ class HighLevelInteractionModel(nn.Module):
         """
         # Move features to the correct device
         features = features.to(device)
+        print(f"[DEBUG] Input features shape: {features.shape}, device: {features.device}")
 
         # Project input features to Llama's hidden size
         projected_inputs = self.input_projection(features)
+        print(f"[DEBUG] Projected inputs shape: {projected_inputs.shape}")
 
         # Llama forward pass
-        llama_outputs = self.llm(inputs_embeds=projected_inputs)  # Using inputs_embeds
-        hidden_states = llama_outputs.last_hidden_state  # Extract the last hidden state
+        llama_outputs = self.llm(inputs_embeds=projected_inputs)
+        hidden_states = llama_outputs.last_hidden_state
+        print(f"[DEBUG] Llama hidden states shape: {hidden_states.shape}")
 
         # Project to final output dimension
         output = self.output_projection(hidden_states)
+        print(f"[DEBUG] Final output shape: {output.shape}")
 
         return output
 

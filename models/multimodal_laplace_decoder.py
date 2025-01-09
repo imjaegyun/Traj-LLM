@@ -1,3 +1,4 @@
+# models/multimodal_laplace_decoder.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,64 +33,41 @@ class MultimodalLaplaceDecoder(nn.Module):
         )
 
     def forward(self, high_level_features, lane_probabilities):
-        """
-        Forward pass to compute \u03bc, b, \u03c0, and uncertainty.
-        Args:
-            high_level_features: Tensor of shape [batch_size, seq_len, input_dim]
-            lane_probabilities: Tensor of shape [batch_size, seq_len, input_dim]
-        Returns:
-            pi: Mixing coefficients of shape [batch_size, seq_len, num_modes]
-            mu: Mean prediction of shape [batch_size, seq_len, num_modes, output_dim]
-            b: Scale prediction of shape [batch_size, seq_len, num_modes, output_dim]
-            uncertainty: Uncertainty prediction of shape [batch_size, seq_len, num_modes, output_dim]
-        """
-        # Cross Attention between high-level features and lane probabilities
         attn_output, _ = self.cross_attention(high_level_features, lane_probabilities, lane_probabilities)
+        print(f"[DEBUG] Attention output shape: {attn_output.shape}, values: {attn_output[0, :2, :5]}")
 
-        # Mixing coefficients (\u03c0)
-        pi = F.softmax(self.mixing_layer(attn_output), dim=-1)  # Shape: [batch_size, seq_len, num_modes]
+        pi = F.softmax(self.mixing_layer(attn_output), dim=-1)
+        print(f"[DEBUG] Pi shape: {pi.shape}, values: {pi[0, :2, :5]}")
 
-        # Mean (\u03bc) and scale (b)
         mu = self.mu_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
         b = self.b_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
+        print(f"[DEBUG] Mu shape: {mu.shape}, values: {mu[0, 0, :2, :2]}")
+        print(f"[DEBUG] B shape: {b.shape}, values: {b[0, 0, :2, :2]}")
 
-        # Uncertainty prediction
         uncertainty = self.uncertainty_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
+        print(f"[DEBUG] Uncertainty shape: {uncertainty.shape}, values: {uncertainty[0, 0, :2, :2]}")
 
         return pi, mu, b, uncertainty
 
     @staticmethod
     def compute_laplace_loss(pi, mu, b, targets):
-        """
-        Compute the combined Laplace loss using the Winner-Takes-All strategy.
-        Args:
-            pi: Mixing coefficients of shape [batch_size, seq_len, num_modes]
-            mu: Predicted mean of shape [batch_size, seq_len, num_modes, output_dim]
-            b: Predicted scale of shape [batch_size, seq_len, num_modes, output_dim]
-            targets: Ground truth tensor of shape [batch_size, seq_len, output_dim]
-        Returns:
-            total_loss: Combined Laplace loss
-        """
-        epsilon = 1e-6  # To prevent division by zero
+        epsilon = 1e-6
         b = b + epsilon
+        targets = targets.unsqueeze(2).expand_as(mu)
 
-        # Expand targets for each mode
-        targets = targets.unsqueeze(2).expand_as(mu)  # Shape: [batch_size, seq_len, num_modes, output_dim]
-
-        # Compute Laplace negative log-likelihood for each mode
         diff = torch.abs(mu - targets)
-        log_likelihood = torch.log(2 * b) + diff / b  # Shape: [batch_size, seq_len, num_modes, output_dim]
+        log_likelihood = torch.log(2 * b) + diff / b
+        print(f"[DEBUG] Log-likelihood shape: {log_likelihood.shape}, values: {log_likelihood[0, 0, :2]}")
 
-        # Sum over output_dim to get per-mode likelihood
-        per_mode_loss = log_likelihood.sum(dim=-1)  # Shape: [batch_size, seq_len, num_modes]
+        weighted_loss = pi * log_likelihood.sum(dim=-1)
+        print(f"[DEBUG] Weighted loss shape: {weighted_loss.shape}, values: {weighted_loss[0, :2]}")
 
-        # Combine with mixing coefficients (\u03c0) using Winner-Takes-All
-        weighted_loss = pi * per_mode_loss
-        wta_loss, _ = torch.min(weighted_loss, dim=-1)  # Take the mode with minimum error
+        wta_loss, _ = torch.min(weighted_loss, dim=-1)
+        print(f"[DEBUG] WTA loss shape: {wta_loss.shape}, values: {wta_loss[:2]}")
 
-        total_loss = wta_loss.mean()  # Average over batch and sequence
-
+        total_loss = wta_loss.mean()
         return total_loss
+
 
 
 # Example Usage

@@ -1,61 +1,62 @@
 defaults:
-  - tasks/train  # 기본 작업
-  #- tasks/test   # 테스트 작업 추가
+  - _self_
+  - tasks/train
   - modules/data_loader
   - modules/model
   - modules/wandb
 
 train:
-  lr: 0.001
-  epochs: 100
-  weight_decay: 0.01
-  batch_size: 16
-  gpus: 1
+  lr: 0.001  # Learning rate
+  epochs: 100  # Number of training epochs
+  weight_decay: 0.01  # Weight decay for regularization
+  batch_size: 16  # Batch size for training
+  gpus: 1  # Number of GPUs
   gradient_clip_val: 0.5  # Gradient clipping value
-  lr_step: 10  # 학습률 감소 주기 (에포크 기준)
-  lr_gamma: 0.1  # 학습률 감소 비율
+  lr_step: 10  # Learning rate decay step (in epochs)
+  lr_gamma: 0.1  # Learning rate decay factor
+  k_values: [5, 10]  # Multimodal output values for trajectory prediction
 
 test:
-  batch_size: 16
-  gpus: 1
-  data_root: /home/user/data/Nuscenes
-  checkpoint: /home/user/Traj-LLM/imjaegyun/Traj-LLM/outputs/2025-01-08/01-58-51/Traj-LLM/2yau9l6p/checkpoints/epoch=99-step=4300.ckpt
-  output_file: predictions.json
+  batch_size: 16  # Batch size for testing
+  gpus: 1  # Number of GPUs for testing
+  data_root: /home/user/data/Nuscenes  # Root path for dataset
+  checkpoint: /home/user/Traj-LLM/imjaegyun/Traj-LLM/outputs/2025-01-08/01-58-51/Traj-LLM/2yau9l6p/checkpoints/epoch=99-step=4300.ckpt  # Path to checkpoint file
+  output_file: predictions.json  # Output file for predictions
 
 modules:
   sparse_encoder:
-    input_dim: 128
-    hidden_dim: 256
-    output_dim: 128
+    input_dim: 4  # Input dimension for sparse encoder
+    hidden_dim: 256  # Hidden dimension for sparse encoder
+    output_dim: 128  # Output dimension for sparse encoder
 
   high_level_model:
-    llm_model_name: meta-llama/Llama-3.2-3B
-    input_dim: 128
-    hidden_dim: 256
-    output_dim: 128
+    llm_model_name: meta-llama/Llama-3.2-3B  # Name of high-level model
+    input_dim: 128  # Input dimension
+    hidden_dim: 256  # Hidden dimension
+    output_dim: 128  # Output dimension
 
   lane_probability:
-    agent_dim: 128
-    lane_dim: 128
-    hidden_dim: 256
-    num_lanes: 10
+    agent_dim: 128  # Input dimension for agent features
+    lane_dim: 128  # Input dimension for lane features
+    hidden_dim: 256  # Hidden dimension
+    num_lanes: 10  # Number of lanes
 
   laplace_decoder:
-    input_dim: 128
-    output_dim: 64
+    input_dim: 128  # Input dimension for Laplace decoder
+    output_dim: 64  # Output dimension for Laplace decoder
 
   mamba:
-    input_dim: 128
-    hidden_dim: 256
-    num_blocks: 3
+    input_dim: 128  # Input dimension for Mamba layer
+    hidden_dim: 256  # Hidden dimension
+    num_blocks: 3  # Number of Mamba blocks
 
 data:
-  nuscenes_path: /home/user/data/Nuscenes
-  train_split: train
-  val_split: val
-  test_split: test
+  nuscenes_path: /home/user/data/Nuscenes  # Path to NuScenes dataset
+  train_split: train  # Training split name
+  val_split: val  # Validation split name
+  test_split: test  # Test split name
 
 wandb:
-  project: Traj-LLM
+  project: Traj-LLM  # Wandb project name
   entity: your_wandb_entity  # Replace with your W&B entity name
-  mode: online  # online/offline
+  mode: online  # Mode for Wandb logging (online/offline)

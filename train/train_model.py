@@ -21,7 +21,8 @@ class TrajLLM(pl.LightningModule):
 
         # Configuration
         self.config = config
-
+        self.k_values = config.train.k_values  # Retrieve k_values from config
+        self.learning_rate = config.train.lr  # Retrieve learning rate from config
         # Sparse Context Encoding
         self.sparse_encoder = SparseContextEncoder(
             input_dim=config.modules.sparse_encoder.input_dim,
@@ -36,7 +37,6 @@ class TrajLLM(pl.LightningModule):
         self.high_level_model = HighLevelInteractionModel(
             llm_model_name=config.modules.high_level_model.llm_model_name,
             input_dim=config.modules.high_level_model.input_dim,
-            hidden_dim=config.modules.high_level_model.hidden_dim,
             output_dim=config.modules.high_level_model.output_dim
         )
 
@@ -63,6 +63,7 @@ class TrajLLM(pl.LightningModule):
 
         # Initialize parameters
         self.reset_parameters()
+        torch.set_float32_matmul_precision("medium")
 
     def reset_parameters(self):
         for module in self.modules():
@@ -88,10 +89,20 @@ class TrajLLM(pl.LightningModule):
             high_level_features = self.mamba_layer(high_level_features)
 
         # Multimodal Laplace decoding
-        mu, b, uncertainty = self.laplace_decoder(high_level_features)
+        mu, b, uncertainty = self.laplace_decoder(high_level_features, lane_probabilities)
 
         return lane_probabilities, lane_predictions, mu, b
 
+    def compute_minade(self, predictions, ground_truth):
+        return torch.mean(torch.norm(predictions - ground_truth, dim=-1))
+
+    def compute_minfde(self, predictions, ground_truth):
+        return torch.norm(predictions[:, -1] - ground_truth[:, -1], dim=-1).mean()
+
+    def compute_miss_rate(self, predictions, ground_truth, threshold=2.0):
+        final_displacement = torch.norm(predictions[:, -1] - ground_truth[:, -1], dim=-1)
+        return (final_displacement > threshold).float().mean()
+    
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.config.train.lr, weight_decay=self.config.train.weight_decay)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=self.config.train.lr_step, gamma=self.config.train.lr_gamma)
@@ -100,17 +111,16 @@ class TrajLLM(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         agent_inputs = batch['agent_features']
         lane_inputs = batch['lane_features']
-        trajectory_points = batch['trajectory_points']
-        lane_labels = batch['lane_labels']
 
-        lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
+
+        lane_probabilities, mu, b = self(agent_inputs, lane_inputs)
 
         num_classes = lane_probabilities.shape[-1]
         lane_probabilities = lane_probabilities.reshape(-1, num_classes)
         lane_labels = lane_labels.reshape(-1)
 
         lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
-        laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, trajectory_points)
+        laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b)
         total_loss = lane_loss + laplace_loss
 
         self.log("train/total_loss", total_loss, on_step=True, on_epoch=True, logger=True)
@@ -122,20 +132,19 @@ class TrajLLM(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         agent_inputs = batch['agent_features']
         lane_inputs = batch['lane_features']
-        lane_labels = batch['lane_labels']
+        trajectory_points = batch['trajectory_points']
 
-        lane_probabilities, lane_predictions, mu, b = self(agent_inputs, lane_inputs)
+        mu, b, uncertainty = self(agent_inputs, lane_inputs)
 
-        batch_size, seq_len, num_classes = lane_probabilities.shape
-        lane_probabilities = lane_probabilities.reshape(-1, num_classes)
-        lane_labels = lane_labels.reshape(-1)
+        # Compute evaluation metrics
+        minADE = self.compute_minade(mu, trajectory_points)
+        minFDE = self.compute_minfde(mu, trajectory_points)
+        miss_rate = self.compute_miss_rate(mu, trajectory_points)
 
-        lane_loss = nn.CrossEntropyLoss()(lane_probabilities, lane_labels)
-        laplace_loss = self.laplace_decoder.compute_laplace_loss(mu, b, batch["trajectory_points"])
-        total_loss = lane_loss + laplace_loss
-
-        self.log("val/total_loss", total_loss, on_step=False, on_epoch=True, logger=True)
-        return total_loss
+        # Log evaluation metrics
+        self.log("val_minADE", minADE)
+        self.log("val_minFDE", minFDE)
+        self.log("val_miss_rate", miss_rate)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         agent_inputs = batch['agent_features']
@@ -177,7 +186,7 @@ def train_main(config: DictConfig):
 
     trainer.fit(model, train_loader, val_loader)
 
-@hydra.main(config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
+@hydra.main(version_base="1.1", config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs", config_name="config.yaml")
 def main(config: DictConfig):
     train_main(config)
 
