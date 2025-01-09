@@ -9,7 +9,11 @@ Please specify a compatability version level, or None.
 Will assume defaults for version 1.1
   @hydra.main(config_path="configs", config_name="traj_llm")
 Starting training...
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.59it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.42it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.25it/s]
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.59it/s]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.42it/s]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.25it/s]
 GPU available: True (cuda), used: True
 TPU available: False, using: 0 TPU cores
 HPU available: False, using: 0 HPUs
@@ -77,7 +81,10 @@ Done loading in 26.495 seconds.
 Reverse indexing ...
 Done reverse indexing in 5.5 seconds.
 ======
-Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No lanes found near ego position: [1325.0349258988065, 1102.3165183598812, 0.0]
+
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]
+Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]
+Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] No lanes found near ego position: [1325.0349258988065, 1102.3165183598812, 0.0]
 [DEBUG] No lanes found near ego position: [1236.6507006962584, 997.1128806383613, 0.0]
 [DEBUG] No lanes found near ego position: [750.9568410553911, 569.8419103692459, 0.0]
 [DEBUG] No lanes found near ego position: [507.90058216215584, 785.2736450593233, 0.0]
@@ -216,4 +223,5 @@ RuntimeError: mat1 and mat2 shapes cannot be multiplied (3840x128 and 4x128)
 
 Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
 [1;34mwandb[0m: 🚀 View run [33mpious-vortex-160[0m at: [34mhttps://wandb.ai/imjaegyun/Traj-LLM/runs/pmk4exva[0m
-                                                                   
+
+                                                                   
