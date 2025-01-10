@@ -1,0 +1,16 @@
+{"time":"2025-01-10T03:54:58.08618055+09:00","level":"INFO","msg":"using version","core version":"0.19.1"}
+{"time":"2025-01-10T03:54:58.08619762+09:00","level":"INFO","msg":"created symlink","path":"wandb/run-20250110_035457-f6p18hfk/logs/debug-core.log"}
+{"time":"2025-01-10T03:54:58.192836548+09:00","level":"INFO","msg":"created new stream","id":"f6p18hfk"}
+{"time":"2025-01-10T03:54:58.192891829+09:00","level":"INFO","msg":"stream: started","id":"f6p18hfk"}
+{"time":"2025-01-10T03:54:58.192967221+09:00","level":"INFO","msg":"writer: Do: started","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:54:58.192989631+09:00","level":"INFO","msg":"handler: started","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:54:58.193029362+09:00","level":"INFO","msg":"sender: started","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:54:59.477255586+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-10T03:55:15.37396888+09:00","level":"INFO","msg":"stream: closing","id":"f6p18hfk"}
+{"time":"2025-01-10T03:55:15.3740028+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-10T03:55:15.374792377+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-10T03:55:16.263400787+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-10T03:55:16.558573295+09:00","level":"INFO","msg":"handler: closed","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:55:16.558605096+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:55:16.558623456+09:00","level":"INFO","msg":"sender: closed","stream_id":"f6p18hfk"}
+{"time":"2025-01-10T03:55:16.558743509+09:00","level":"INFO","msg":"stream: closed","id":"f6p18hfk"}

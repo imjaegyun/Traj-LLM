@@ -1,0 +1,247 @@
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                   | Type                         | Params | Mode
+--------------------------------------------------------------------------------
+0 | sparse_encoder         | SparseContextEncoder         | 826 K  | train
+1 | high_level_model       | HighLevelInteractionModel    | 3.2 B  | train
+2 | lane_probability_model | LaneAwareProbabilityLearning | 429 K  | train
+3 | laplace_decoder        | MultimodalLaplaceDecoder     | 79.1 K | train
+4 | mamba_layer            | MambaLayer                   | 330 K  | train
+--------------------------------------------------------------------------------
+3.2 B     Trainable params
+0         Non-trainable params
+3.2 B     Total params
+12,860.819Total estimated model params size (MB)
+101       Modules in train mode
+397       Modules in eval mode
+Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] Agent encoded shape: torch.Size([4, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([4, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([4, 6, 128])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] Input features shape: torch.Size([4, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([4, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([4, 6, 3072])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] m shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([4, 240, 128]), values: tensor([[ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278],
+        [ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[1.8862, 0.4552, 1.7066, 0.3949, 0.2555, 0.6938, 1.3221, 0.2338, 0.3846,
+         0.4643, 0.5121, 1.1196, 1.2941, 1.3653, 0.7344, 0.5481, 1.1086, 0.6197,
+         0.6485, 0.6189, 0.8122, 0.3145, 1.1793, 0.5005, 0.4662, 1.7840, 0.3319,
+         0.4612, 2.4779, 0.4668, 0.2429, 0.5273, 2.3691, 0.5852, 1.8489, 0.6556,
+         0.9208, 1.9567, 1.4324, 0.5659, 0.3817, 0.1934, 0.9449, 0.3934, 1.3811,
+         0.9093, 0.6163, 0.9105, 0.4375, 1.9012, 0.9552, 0.1288, 0.4019, 1.9509,
+         0.9765, 0.4215, 1.0257, 1.1607, 0.2169, 0.7997, 1.2035, 0.4327, 1.0601,
+         0.6986, 1.3775, 0.6692, 0.5475, 0.4732, 1.3601, 0.6403, 0.6993, 0.3041,
+         1.1485, 0.4221, 0.4982, 0.5993, 0.6409, 0.8309, 1.4944, 0.3130, 1.4387,
+         1.1593, 0.6219, 0.1630, 1.7407, 0.3013, 0.7786, 1.5332, 0.3739, 1.5432,
+         0.5600, 0.5533, 0.8122, 1.5610, 1.3873, 0.1464, 0.5818, 2.6846, 1.2017,
+         0.3439, 0.4120, 0.9606, 1.9362, 3.3683, 0.2355, 1.1233, 0.9857, 0.8105,
+         1.6720, 1.1641, 0.5218, 0.3964, 1.7162, 0.3011, 0.2758, 0.8201, 0.2142,
+         0.2047, 1.0826, 0.3593, 0.6367, 1.0072, 2.2786, 0.5340, 1.2783, 0.7795,
+         0.6885, 1.3319]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([4, 128, 128]), values: tensor([[ 0.0237, -0.7420, -0.0110,  0.8872,  0.3499],
+        [-0.1360, -0.1883, -1.7749, -0.0347, -0.0553],
+        [ 3.4525,  0.2016,  2.7508,  0.3740, -0.2615],
+        [-0.9512,  0.2792,  1.4524,  1.1334,  0.0610],
+        [ 3.5233, -0.4702, -3.7956,  0.0874,  0.2554]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([4, 128, 128]), values: tensor([[-0.8402, -0.0361,  0.7266,  0.5789, -0.1656],
+        [-5.9792,  0.0402,  2.1629,  0.0635,  0.4723],
+        [ 3.4848, -0.0422, -1.2515, -0.0536,  0.0121],
+        [-3.8511,  0.5085,  0.2990,  0.2083,  0.0070],
+        [ 1.6094, -0.6927,  1.3704, -0.4282,  0.0517]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([4, 240, 128]), values: tensor([[-0.5222, -0.2975,  0.4456,  0.1206,  0.2538],
+        [-0.5222, -0.2975,  0.4456,  0.1206,  0.2538]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([4, 240, 6]), values: tensor([[ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023],
+        [ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([4, 240, 6]), values: tensor([[0.2129, 0.1388, 0.1220, 0.0929, 0.2171],
+        [0.2129, 0.1388, 0.1220, 0.0929, 0.2171]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([4, 240]), values: tensor([4, 4, 4, 4, 4], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([4, 6, 128])
+[DEBUG] Pi shape: torch.Size([4, 6, 5])
+Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  3.89it/s][DEBUG] Agent encoded shape: torch.Size([4, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([4, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([4, 6, 128])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] Input features shape: torch.Size([4, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([4, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([4, 6, 3072])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] m shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([4, 240, 128]), values: tensor([[ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278],
+        [ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[1.8862, 0.4552, 1.7066, 0.3949, 0.2555, 0.6938, 1.3221, 0.2338, 0.3846,
+         0.4643, 0.5121, 1.1196, 1.2941, 1.3653, 0.7344, 0.5481, 1.1086, 0.6197,
+         0.6485, 0.6189, 0.8122, 0.3145, 1.1793, 0.5005, 0.4662, 1.7840, 0.3319,
+         0.4612, 2.4779, 0.4668, 0.2429, 0.5273, 2.3691, 0.5852, 1.8489, 0.6556,
+         0.9208, 1.9567, 1.4324, 0.5659, 0.3817, 0.1934, 0.9449, 0.3934, 1.3811,
+         0.9093, 0.6163, 0.9105, 0.4375, 1.9012, 0.9552, 0.1288, 0.4019, 1.9509,
+         0.9765, 0.4215, 1.0257, 1.1607, 0.2169, 0.7997, 1.2035, 0.4327, 1.0601,
+         0.6986, 1.3775, 0.6692, 0.5475, 0.4732, 1.3601, 0.6403, 0.6993, 0.3041,
+         1.1485, 0.4221, 0.4982, 0.5993, 0.6409, 0.8309, 1.4944, 0.3130, 1.4387,
+         1.1593, 0.6219, 0.1630, 1.7407, 0.3013, 0.7786, 1.5332, 0.3739, 1.5432,
+         0.5600, 0.5533, 0.8122, 1.5610, 1.3873, 0.1464, 0.5818, 2.6846, 1.2017,
+         0.3439, 0.4120, 0.9606, 1.9362, 3.3683, 0.2355, 1.1233, 0.9857, 0.8105,
+         1.6720, 1.1641, 0.5218, 0.3964, 1.7162, 0.3011, 0.2758, 0.8201, 0.2142,
+         0.2047, 1.0826, 0.3593, 0.6367, 1.0072, 2.2786, 0.5340, 1.2783, 0.7795,
+         0.6885, 1.3319]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([4, 128, 128]), values: tensor([[ 0.0237, -0.7420, -0.0110,  0.8872,  0.3499],
+        [-0.1360, -0.1883, -1.7749, -0.0347, -0.0553],
+        [ 3.4525,  0.2016,  2.7508,  0.3740, -0.2615],
+        [-0.9512,  0.2792,  1.4524,  1.1334,  0.0610],
+        [ 3.5233, -0.4702, -3.7956,  0.0874,  0.2554]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([4, 128, 128]), values: tensor([[-0.8402, -0.0361,  0.7266,  0.5789, -0.1656],
+        [-5.9792,  0.0402,  2.1629,  0.0635,  0.4723],
+        [ 3.4848, -0.0422, -1.2515, -0.0536,  0.0121],
+        [-3.8511,  0.5085,  0.2990,  0.2083,  0.0070],
+        [ 1.6094, -0.6927,  1.3704, -0.4282,  0.0517]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([4, 240, 128]), values: tensor([[-0.5222, -0.2975,  0.4456,  0.1206,  0.2538],
+        [-0.5222, -0.2975,  0.4456,  0.1206,  0.2538]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([4, 240, 6]), values: tensor([[ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023],
+        [ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([4, 240, 6]), values: tensor([[0.2129, 0.1388, 0.1220, 0.0929, 0.2171],
+        [0.2129, 0.1388, 0.1220, 0.0929, 0.2171]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([4, 240]), values: tensor([4, 4, 4, 4, 4], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([4, 6, 128])
+[DEBUG] Pi shape: torch.Size([4, 6, 5])
+Epoch 0:   0%|          | 0/170 [00:00<?, ?it/s] [DEBUG] Agent encoded shape: torch.Size([4, 6, 128])
+[DEBUG] Lane encoded shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 0 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 0 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 1 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 1 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent self-attended shape: torch.Size([4, 6, 128])
+[DEBUG] Layer 2 - Agent-Lane attended shape: torch.Size([4, 240, 128])
+[DEBUG] Layer 2 - Lane-Agent attended shape: torch.Size([4, 6, 128])
+[DEBUG] Fused agent shape: torch.Size([4, 6, 128])
+[DEBUG] Fused lane shape: torch.Size([4, 6, 128])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] Input features shape: torch.Size([4, 6, 128]), device: cuda:0
+[DEBUG] Projected inputs shape: torch.Size([4, 6, 3072])
+[DEBUG] Llama hidden states shape: torch.Size([4, 6, 3072])
+[DEBUG] Final output shape: torch.Size([4, 6, 128])
+[DEBUG] m shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] n shape: torch.Size([4, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] m_prime shape: torch.Size([4, 240, 128]), values: tensor([[ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278],
+        [ 0.0214,  0.0143, -0.0018,  0.0012, -0.0278]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[1.8862, 0.4552, 1.7066, 0.3949, 0.2555, 0.6938, 1.3221, 0.2338, 0.3846,
+         0.4643, 0.5121, 1.1196, 1.2941, 1.3653, 0.7344, 0.5481, 1.1086, 0.6197,
+         0.6485, 0.6189, 0.8122, 0.3145, 1.1793, 0.5005, 0.4662, 1.7840, 0.3319,
+         0.4612, 2.4779, 0.4668, 0.2429, 0.5273, 2.3691, 0.5852, 1.8489, 0.6556,
+         0.9208, 1.9567, 1.4324, 0.5659, 0.3817, 0.1934, 0.9449, 0.3934, 1.3811,
+         0.9093, 0.6163, 0.9105, 0.4375, 1.9012, 0.9552, 0.1288, 0.4019, 1.9509,
+         0.9765, 0.4215, 1.0257, 1.1607, 0.2169, 0.7997, 1.2035, 0.4327, 1.0601,
+         0.6986, 1.3775, 0.6692, 0.5475, 0.4732, 1.3601, 0.6403, 0.6993, 0.3041,
+         1.1485, 0.4221, 0.4982, 0.5993, 0.6409, 0.8309, 1.4944, 0.3130, 1.4387,
+         1.1593, 0.6219, 0.1630, 1.7407, 0.3013, 0.7786, 1.5332, 0.3739, 1.5432,
+         0.5600, 0.5533, 0.8122, 1.5610, 1.3873, 0.1464, 0.5818, 2.6846, 1.2017,
+         0.3439, 0.4120, 0.9606, 1.9362, 3.3683, 0.2355, 1.1233, 0.9857, 0.8105,
+         1.6720, 1.1641, 0.5218, 0.3964, 1.7162, 0.3011, 0.2758, 0.8201, 0.2142,
+         0.2047, 1.0826, 0.3593, 0.6367, 1.0072, 2.2786, 0.5340, 1.2783, 0.7795,
+         0.6885, 1.3319]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([4, 128, 128]), values: tensor([[ 0.0237, -0.7420, -0.0110,  0.8872,  0.3499],
+        [-0.1360, -0.1883, -1.7749, -0.0347, -0.0553],
+        [ 3.4525,  0.2016,  2.7508,  0.3740, -0.2615],
+        [-0.9512,  0.2792,  1.4524,  1.1334,  0.0610],
+        [ 3.5233, -0.4702, -3.7956,  0.0874,  0.2554]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] B_discrete shape: torch.Size([4, 128, 128]), values: tensor([[-0.8402, -0.0361,  0.7266,  0.5789, -0.1656],
+        [-5.9792,  0.0402,  2.1629,  0.0635,  0.4723],
+        [ 3.4848, -0.0422, -1.2515, -0.0536,  0.0121],
+        [-3.8511,  0.5085,  0.2990,  0.2083,  0.0070],
+        [ 1.6094, -0.6927,  1.3704, -0.4282,  0.0517]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] q_ssm shape: torch.Size([4, 240, 128]), values: tensor([[-0.5222, -0.2975,  0.4456,  0.1206,  0.2538],
+        [-0.5222, -0.2975,  0.4456,  0.1206,  0.2538]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] logits shape: torch.Size([4, 240, 6]), values: tensor([[ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023],
+        [ 0.2830, -0.1448, -0.2737, -0.5465,  0.3023]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_probabilities shape: torch.Size([4, 240, 6]), values: tensor([[0.2129, 0.1388, 0.1220, 0.0929, 0.2171],
+        [0.2129, 0.1388, 0.1220, 0.0929, 0.2171]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_predictions shape: torch.Size([4, 240]), values: tensor([4, 4, 4, 4, 4], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([4, 6, 128])
+[DEBUG] Pi shape: torch.Size([4, 6, 5])
+Error executing job with overrides: ['+task=train']
+Traceback (most recent call last):
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py", line 15, in main
+    train_main(config)  # train_main에 DictConfig 전달
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 257, in train_main
+    trainer.fit(model, train_loader, val_loader)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 539, in fit
+    call._call_and_handle_interrupt(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 47, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 575, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 982, in _run
+    results = self._run_stage()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1026, in _run_stage
+    self.fit_loop.run()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 216, in run
+    self.advance()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 455, in advance
+    self.epoch_loop.run(self._data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 150, in run
+    self.advance(data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 320, in advance
+    batch_output = self.automatic_optimization.run(trainer.optimizers[0], batch_idx, kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 192, in run
+    self._optimizer_step(batch_idx, closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 270, in _optimizer_step
+    call._call_lightning_module_hook(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 171, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/module.py", line 1302, in optimizer_step
+    optimizer.step(closure=optimizer_closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/optimizer.py", line 154, in step
+    step_output = self._strategy.optimizer_step(self._optimizer, closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 239, in optimizer_step
+    return self.precision_plugin.optimizer_step(optimizer, model=model, closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/plugins/precision/precision.py", line 123, in optimizer_step
+    return optimizer.step(closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/lr_scheduler.py", line 68, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 373, in wrapper
+    out = func(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 76, in _use_grad
+    ret = func(self, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/adamw.py", line 173, in step
+    self._init_group(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/adamw.py", line 121, in _init_group
+    state["exp_avg"] = torch.zeros_like(
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 96.00 MiB. GPU 0 has a total capacty of 23.54 GiB of which 43.38 MiB is free. Including non-PyTorch memory, this process has 23.43 GiB memory in use. Of the allocated memory 22.88 GiB is allocated by PyTorch, and 65.18 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

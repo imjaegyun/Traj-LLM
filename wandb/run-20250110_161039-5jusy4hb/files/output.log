@@ -1,0 +1,213 @@
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                   | Type                         | Params | Mode
+--------------------------------------------------------------------------------
+0 | sparse_encoder         | SparseContextEncoder         | 826 K  | train
+1 | high_level_model       | HighLevelInteractionModel    | 3.2 B  | train
+2 | lane_probability_model | LaneAwareProbabilityLearning | 429 K  | train
+3 | laplace_decoder        | MultimodalLaplaceDecoder     | 79.1 K | train
+4 | mamba_layer            | MambaLayer                   | 330 K  | train
+--------------------------------------------------------------------------------
+3.2 B     Trainable params
+0         Non-trainable params
+3.2 B     Total params
+12,860.819Total estimated model params size (MB)
+101       Modules in train mode
+397       Modules in eval mode
+Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][DEBUG] m shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([1, 240, 128]), values: tensor([[-0.0317,  0.0018, -0.0340, -0.0280,  0.0321],
+        [-0.0317,  0.0018, -0.0340, -0.0280,  0.0321]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.4205, 0.3511, 0.8334, 0.4259, 0.2484, 1.4397, 0.2291, 0.9478, 0.7722,
+         0.9410, 1.8738, 0.3011, 1.9245, 2.1393, 0.9816, 0.9274, 0.7460, 1.3366,
+         0.4914, 1.3915, 0.3953, 0.5289, 1.1528, 0.8635, 0.4991, 0.6291, 0.9322,
+         1.2658, 0.8592, 0.6256, 0.8091, 1.6047, 0.4145, 1.0543, 1.2271, 1.0363,
+         0.3477, 0.4165, 0.4756, 0.6950, 0.5712, 1.9572, 0.2398, 0.2287, 0.5205,
+         0.3321, 0.6879, 0.7931, 0.5461, 0.9125, 0.4051, 0.4928, 1.1312, 0.5042,
+         1.3971, 0.6948, 0.4500, 0.6895, 0.1855, 0.6612, 0.4137, 0.5203, 0.4587,
+         0.4510, 1.2387, 0.3338, 1.2868, 0.4290, 0.2747, 0.9677, 0.7261, 0.2782,
+         0.1946, 0.7784, 1.0535, 0.1952, 0.6156, 0.4637, 0.3165, 0.3497, 0.9256,
+         0.2801, 1.8664, 1.7441, 0.6437, 1.1606, 0.5280, 1.3236, 1.1361, 1.0771,
+         0.9499, 0.4931, 0.6136, 0.3183, 0.9141, 0.8470, 0.5313, 0.5150, 1.9128,
+         0.7120, 1.1539, 1.0731, 0.8691, 0.9623, 0.6958, 0.3433, 0.2326, 0.7886,
+         1.4925, 0.8695, 0.7080, 1.0008, 1.6084, 0.0913, 0.6511, 1.2593, 1.1778,
+         1.2244, 0.6667, 0.9705, 1.1542, 1.0377, 0.7151, 1.2069, 0.4810, 1.1678,
+         0.6078, 0.2689]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([1, 128, 128]), values: tensor([[ 0.5576, -0.7083, -0.2196,  0.5946, -0.1530],
+        [ 0.1360, -0.3264,  1.6327,  0.1551,  0.5937],
+        [-0.0729, -0.0901, -0.5424, -0.6194, -0.3548],
+        [ 0.1409, -0.1015,  0.2746, -0.0611,  0.1261],
+        [ 0.0483,  0.5271,  1.6879, -0.1219, -0.2140]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([1, 128, 128]), values: tensor([[-0.2840, -0.0159,  0.2913,  0.5329, -0.2508],
+        [ 0.9152, -0.2655,  0.6882,  0.0420,  0.0063],
+        [ 0.6697, -0.0470, -0.2236, -0.2897,  0.2213],
+        [ 0.5803, -0.4117, -0.4424,  0.4851,  0.2150],
+        [ 0.9789, -0.0895,  0.2069,  0.2569, -0.3970]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([1, 240, 128]), values: tensor([[ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925],
+        [ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([1, 240, 6]), values: tensor([[ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483],
+        [ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([1, 240, 6]), values: tensor([[0.2216, 0.1394, 0.1591, 0.1600, 0.1387],
+        [0.2216, 0.1394, 0.1591, 0.1600, 0.1387]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([1, 240]), values: tensor([0, 0, 0, 0, 0], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([1, 6, 128])
+[DEBUG] Pi shape: torch.Size([1, 6, 5])
+Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  3.99it/s][DEBUG] m shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] n shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0')
+[DEBUG] m_prime shape: torch.Size([1, 240, 128]), values: tensor([[-0.0317,  0.0018, -0.0340, -0.0280,  0.0321],
+        [-0.0317,  0.0018, -0.0340, -0.0280,  0.0321]], device='cuda:0')
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.4205, 0.3511, 0.8334, 0.4259, 0.2484, 1.4397, 0.2291, 0.9478, 0.7722,
+         0.9410, 1.8738, 0.3011, 1.9245, 2.1393, 0.9816, 0.9274, 0.7460, 1.3366,
+         0.4914, 1.3915, 0.3953, 0.5289, 1.1528, 0.8635, 0.4991, 0.6291, 0.9322,
+         1.2658, 0.8592, 0.6256, 0.8091, 1.6047, 0.4145, 1.0543, 1.2271, 1.0363,
+         0.3477, 0.4165, 0.4756, 0.6950, 0.5712, 1.9572, 0.2398, 0.2287, 0.5205,
+         0.3321, 0.6879, 0.7931, 0.5461, 0.9125, 0.4051, 0.4928, 1.1312, 0.5042,
+         1.3971, 0.6948, 0.4500, 0.6895, 0.1855, 0.6612, 0.4137, 0.5203, 0.4587,
+         0.4510, 1.2387, 0.3338, 1.2868, 0.4290, 0.2747, 0.9677, 0.7261, 0.2782,
+         0.1946, 0.7784, 1.0535, 0.1952, 0.6156, 0.4637, 0.3165, 0.3497, 0.9256,
+         0.2801, 1.8664, 1.7441, 0.6437, 1.1606, 0.5280, 1.3236, 1.1361, 1.0771,
+         0.9499, 0.4931, 0.6136, 0.3183, 0.9141, 0.8470, 0.5313, 0.5150, 1.9128,
+         0.7120, 1.1539, 1.0731, 0.8691, 0.9623, 0.6958, 0.3433, 0.2326, 0.7886,
+         1.4925, 0.8695, 0.7080, 1.0008, 1.6084, 0.0913, 0.6511, 1.2593, 1.1778,
+         1.2244, 0.6667, 0.9705, 1.1542, 1.0377, 0.7151, 1.2069, 0.4810, 1.1678,
+         0.6078, 0.2689]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([1, 128, 128]), values: tensor([[ 0.5576, -0.7083, -0.2196,  0.5946, -0.1530],
+        [ 0.1360, -0.3264,  1.6327,  0.1551,  0.5937],
+        [-0.0729, -0.0901, -0.5424, -0.6194, -0.3548],
+        [ 0.1409, -0.1015,  0.2746, -0.0611,  0.1261],
+        [ 0.0483,  0.5271,  1.6879, -0.1219, -0.2140]], device='cuda:0')
+[DEBUG] B_discrete shape: torch.Size([1, 128, 128]), values: tensor([[-0.2840, -0.0159,  0.2913,  0.5329, -0.2508],
+        [ 0.9152, -0.2655,  0.6882,  0.0420,  0.0063],
+        [ 0.6697, -0.0470, -0.2236, -0.2897,  0.2213],
+        [ 0.5803, -0.4117, -0.4424,  0.4851,  0.2150],
+        [ 0.9789, -0.0895,  0.2069,  0.2569, -0.3970]], device='cuda:0')
+[DEBUG] q_ssm shape: torch.Size([1, 240, 128]), values: tensor([[ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925],
+        [ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925]], device='cuda:0')
+[DEBUG] logits shape: torch.Size([1, 240, 6]), values: tensor([[ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483],
+        [ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483]], device='cuda:0')
+[DEBUG] lane_probabilities shape: torch.Size([1, 240, 6]), values: tensor([[0.2216, 0.1394, 0.1591, 0.1600, 0.1387],
+        [0.2216, 0.1394, 0.1591, 0.1600, 0.1387]], device='cuda:0')
+[DEBUG] lane_predictions shape: torch.Size([1, 240]), values: tensor([0, 0, 0, 0, 0], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([1, 6, 128])
+[DEBUG] Pi shape: torch.Size([1, 6, 5])
+Epoch 0:   0%|          | 0/680 [00:00<?, ?it/s] [DEBUG] m shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] n shape: torch.Size([1, 240, 128]), values: tensor([[0., 0., 0., 0., 0.],
+        [0., 0., 0., 0., 0.]], device='cuda:0', grad_fn=<SliceBackward0>)
+[DEBUG] m_prime shape: torch.Size([1, 240, 128]), values: tensor([[-0.0317,  0.0018, -0.0340, -0.0280,  0.0321],
+        [-0.0317,  0.0018, -0.0340, -0.0280,  0.0321]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] Delta shape: torch.Size([1, 1, 128]), values: tensor([[0.4205, 0.3511, 0.8334, 0.4259, 0.2484, 1.4397, 0.2291, 0.9478, 0.7722,
+         0.9410, 1.8738, 0.3011, 1.9245, 2.1393, 0.9816, 0.9274, 0.7460, 1.3366,
+         0.4914, 1.3915, 0.3953, 0.5289, 1.1528, 0.8635, 0.4991, 0.6291, 0.9322,
+         1.2658, 0.8592, 0.6256, 0.8091, 1.6047, 0.4145, 1.0543, 1.2271, 1.0363,
+         0.3477, 0.4165, 0.4756, 0.6950, 0.5712, 1.9572, 0.2398, 0.2287, 0.5205,
+         0.3321, 0.6879, 0.7931, 0.5461, 0.9125, 0.4051, 0.4928, 1.1312, 0.5042,
+         1.3971, 0.6948, 0.4500, 0.6895, 0.1855, 0.6612, 0.4137, 0.5203, 0.4587,
+         0.4510, 1.2387, 0.3338, 1.2868, 0.4290, 0.2747, 0.9677, 0.7261, 0.2782,
+         0.1946, 0.7784, 1.0535, 0.1952, 0.6156, 0.4637, 0.3165, 0.3497, 0.9256,
+         0.2801, 1.8664, 1.7441, 0.6437, 1.1606, 0.5280, 1.3236, 1.1361, 1.0771,
+         0.9499, 0.4931, 0.6136, 0.3183, 0.9141, 0.8470, 0.5313, 0.5150, 1.9128,
+         0.7120, 1.1539, 1.0731, 0.8691, 0.9623, 0.6958, 0.3433, 0.2326, 0.7886,
+         1.4925, 0.8695, 0.7080, 1.0008, 1.6084, 0.0913, 0.6511, 1.2593, 1.1778,
+         1.2244, 0.6667, 0.9705, 1.1542, 1.0377, 0.7151, 1.2069, 0.4810, 1.1678,
+         0.6078, 0.2689]], device='cuda:0')
+[DEBUG] A_discrete shape: torch.Size([1, 128, 128]), values: tensor([[ 0.5576, -0.7083, -0.2196,  0.5946, -0.1530],
+        [ 0.1360, -0.3264,  1.6327,  0.1551,  0.5937],
+        [-0.0729, -0.0901, -0.5424, -0.6194, -0.3548],
+        [ 0.1409, -0.1015,  0.2746, -0.0611,  0.1261],
+        [ 0.0483,  0.5271,  1.6879, -0.1219, -0.2140]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] B_discrete shape: torch.Size([1, 128, 128]), values: tensor([[-0.2840, -0.0159,  0.2913,  0.5329, -0.2508],
+        [ 0.9152, -0.2655,  0.6882,  0.0420,  0.0063],
+        [ 0.6697, -0.0470, -0.2236, -0.2897,  0.2213],
+        [ 0.5803, -0.4117, -0.4424,  0.4851,  0.2150],
+        [ 0.9789, -0.0895,  0.2069,  0.2569, -0.3970]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] q_ssm shape: torch.Size([1, 240, 128]), values: tensor([[ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925],
+        [ 0.0721, -0.1112, -0.2814, -0.1106,  0.0925]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] logits shape: torch.Size([1, 240, 6]), values: tensor([[ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483],
+        [ 0.3204, -0.1428, -0.0111, -0.0053, -0.1483]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_probabilities shape: torch.Size([1, 240, 6]), values: tensor([[0.2216, 0.1394, 0.1591, 0.1600, 0.1387],
+        [0.2216, 0.1394, 0.1591, 0.1600, 0.1387]], device='cuda:0',
+       grad_fn=<SliceBackward0>)
+[DEBUG] lane_predictions shape: torch.Size([1, 240]), values: tensor([0, 0, 0, 0, 0], device='cuda:0')
+[DEBUG] Attention output shape: torch.Size([1, 6, 128])
+[DEBUG] Pi shape: torch.Size([1, 6, 5])
+Error executing job with overrides: ['+task=train']
+Traceback (most recent call last):
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train.py", line 15, in main
+    train_main(config)  # train_main에 DictConfig 전달
+  File "/home/user/Traj-LLM/imjaegyun/Traj-LLM/train/train_model.py", line 257, in train_main
+    trainer.fit(model, train_loader, val_loader)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 539, in fit
+    call._call_and_handle_interrupt(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 47, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 575, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 982, in _run
+    results = self._run_stage()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1026, in _run_stage
+    self.fit_loop.run()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 216, in run
+    self.advance()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 455, in advance
+    self.epoch_loop.run(self._data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 150, in run
+    self.advance(data_fetcher)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 320, in advance
+    batch_output = self.automatic_optimization.run(trainer.optimizers[0], batch_idx, kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 192, in run
+    self._optimizer_step(batch_idx, closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 270, in _optimizer_step
+    call._call_lightning_module_hook(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 171, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/module.py", line 1302, in optimizer_step
+    optimizer.step(closure=optimizer_closure)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/optimizer.py", line 154, in step
+    step_output = self._strategy.optimizer_step(self._optimizer, closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 239, in optimizer_step
+    return self.precision_plugin.optimizer_step(optimizer, model=model, closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/plugins/precision/precision.py", line 123, in optimizer_step
+    return optimizer.step(closure=closure, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/lr_scheduler.py", line 68, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 373, in wrapper
+    out = func(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/optimizer.py", line 76, in _use_grad
+    ret = func(self, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/optim/adamw.py", line 161, in step
+    loss = closure()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/plugins/precision/precision.py", line 109, in _wrap_closure
+    closure_result = closure()
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 146, in __call__
+    self._result = self.closure(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 140, in closure
+    self._backward_fn(step_output.closure_loss)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 241, in backward_fn
+    call._call_strategy_hook(self.trainer, "backward", loss, optimizer)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 323, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 213, in backward
+    self.precision_plugin.backward(closure_loss, self.lightning_module, optimizer, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/plugins/precision/precision.py", line 73, in backward
+    model.backward(tensor, *args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/pytorch_lightning/core/module.py", line 1097, in backward
+    loss.backward(*args, **kwargs)
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/_tensor.py", line 492, in backward
+    torch.autograd.backward(
+  File "/home/user/anaconda3/envs/im_jg/lib/python3.9/site-packages/torch/autograd/__init__.py", line 251, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 96.00 MiB. GPU 0 has a total capacty of 23.54 GiB of which 26.12 MiB is free. Process 2018818 has 696.00 MiB memory in use. Including non-PyTorch memory, this process has 22.76 GiB memory in use. Of the allocated memory 22.22 GiB is allocated by PyTorch, and 61.71 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

@@ -53,8 +53,8 @@ class SparseContextEncoder(nn.Module):
         agent_encoded, _ = self.agent_encoder(agent_features)   # (B, 6, hidden_dim)
         lane_encoded, _ = self.lane_encoder(lane_features)      # (B, 240, hidden_dim)
 
-        print(f"[DEBUG] Agent encoded shape: {agent_encoded.shape}")
-        print(f"[DEBUG] Lane encoded shape: {lane_encoded.shape}")
+        #print(f"[DEBUG] Agent encoded shape: {agent_encoded.shape}")
+        #print(f"[DEBUG] Lane encoded shape: {lane_encoded.shape}")
 
         # 임시 변수로 저장
         agent_self_attended = agent_encoded
@@ -68,7 +68,7 @@ class SparseContextEncoder(nn.Module):
             agent_self_attended, _ = self.agent_self_attention_layers[i](
                 agent_self_attended, agent_self_attended, agent_self_attended
             )
-            print(f"[DEBUG] Layer {i} - Agent self-attended shape: {agent_self_attended.shape}")
+            #print(f"[DEBUG] Layer {i} - Agent self-attended shape: {agent_self_attended.shape}")
 
             # 3-2) Agent-Lane Cross-Attention
             #     쿼리: Lane => 출력 [B, 240, hidden_dim]
@@ -77,7 +77,7 @@ class SparseContextEncoder(nn.Module):
                 agent_self_attended,  # key
                 agent_self_attended   # value
             )
-            print(f"[DEBUG] Layer {i} - Agent-Lane attended shape: {agent_lane_attended.shape}")
+            #print(f"[DEBUG] Layer {i} - Agent-Lane attended shape: {agent_lane_attended.shape}")
 
             # 3-3) Lane-Agent Cross-Attention
             #     쿼리: Agent => 출력 [B, 6, hidden_dim]
@@ -86,7 +86,7 @@ class SparseContextEncoder(nn.Module):
                 lane_encoded,         # key
                 lane_encoded          # value
             )
-            print(f"[DEBUG] Layer {i} - Lane-Agent attended shape: {lane_agent_attended.shape}")
+            #print(f"[DEBUG] Layer {i} - Lane-Agent attended shape: {lane_agent_attended.shape}")
 
             # (중요) agent_lane_attended는 [B, 240, hidden_dim]
             #       agent_self_attended는 [B,   6, hidden_dim]
@@ -98,7 +98,7 @@ class SparseContextEncoder(nn.Module):
 
         # 이제 agent_self_attended와 agent_lane_attended 둘 다 [B, 6, hidden_dim]
         fused_agent = self.agent_glu(torch.cat([agent_self_attended, agent_lane_attended], dim=-1))
-        print(f"[DEBUG] Fused agent shape: {fused_agent.shape}")
+        #print(f"[DEBUG] Fused agent shape: {fused_agent.shape}")
 
         # lane_encoded: [B, 240, hidden_dim]
         # lane_agent_attended: [B, 6, hidden_dim]
@@ -108,12 +108,12 @@ class SparseContextEncoder(nn.Module):
         # => [B, 6, hidden_dim]
 
         fused_lane = self.lane_glu(torch.cat([pooled_lane_encoded, lane_agent_attended], dim=-1))
-        print(f"[DEBUG] Fused lane shape: {fused_lane.shape}")
+        #print(f"[DEBUG] Fused lane shape: {fused_lane.shape}")
 
         # 최종 (B, 6, 2*hidden_dim)
         fused_features = torch.cat([fused_agent, fused_lane], dim=-1)
 
         output = self.projection(fused_features)  # (B, 6, output_dim)
-        print(f"[DEBUG] Final output shape: {output.shape}")
+        #print(f"[DEBUG] Final output shape: {output.shape}")
 
         return output

@@ -9,7 +9,7 @@ train:
   lr: 0.001  # Learning rate
   epochs: 100  # Number of training epochs
   weight_decay: 0.01  # Weight decay for regularization
-  batch_size: 16  # Batch size for training
+  batch_size: 1  # Batch size for training
   gpus: 1  # Number of GPUs
   gradient_clip_val: 0.5  # Gradient clipping value
   lr_step: 10  # Learning rate decay step (in epochs)
@@ -17,7 +17,7 @@ train:
   k_values: [5, 10]  # Multimodal output values for trajectory prediction
 
 test:
-  batch_size: 16  # Batch size for testing
+  batch_size: 1  # Batch size for testing
   gpus: 1  # Number of GPUs for testing
   data_root: /home/user/data/Nuscenes  # Root path for dataset
   checkpoint: /home/user/Traj-LLM/imjaegyun/Traj-LLM/outputs/2025-01-08/01-58-51/Traj-LLM/2yau9l6p/checkpoints/epoch=99-step=4300.ckpt  # Path to checkpoint file

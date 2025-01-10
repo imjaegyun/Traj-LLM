@@ -63,11 +63,11 @@ class NuscenesDataset(Dataset):
 
             # NuScenesMap API를 사용하여 반경 30m 내 차선 검색
             lanes_in_radius = self.nusc_map.get_records_in_radius(
-                ego_x, ego_y, 30.0, ['lane']
+                ego_x, ego_y, 50.0, ['lane']
             )
 
             if not lanes_in_radius['lane']:
-                print(f"[DEBUG] No lanes found near ego position: {ego_pose['translation']}")
+                #print(f"[DEBUG] No lanes found near ego position: {ego_pose['translation']}")
                 return np.zeros((self.target_length, 128))
 
             lane_features = []

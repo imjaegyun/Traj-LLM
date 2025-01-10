@@ -60,11 +60,11 @@ class MultimodalLaplaceDecoder(nn.Module):
             key=lane_prob_emb,         # [B, seq_len, 128]
             value=lane_prob_emb        # [B, seq_len, 128]
         )
-        print(f"[DEBUG] Attention output shape: {attn_output.shape}")
+        #print(f"[DEBUG] Attention output shape: {attn_output.shape}")
 
         # 3) Compute pi (mixing coefficients)
         pi = F.softmax(self.mixing_layer(attn_output), dim=-1)
-        print(f"[DEBUG] Pi shape: {pi.shape}")
+        #print(f"[DEBUG] Pi shape: {pi.shape}")
 
         # 4) Compute mu, b
         mu = self.mu_layer(attn_output).view(-1, attn_output.size(1), self.num_modes, self.output_dim)
