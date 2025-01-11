@@ -6,8 +6,8 @@ defaults:
   - modules/wandb
 
 train:
-  lr: 0.001  # Learning rate
-  epochs: 100  # Number of training epochs
+  lr: 0.0001  # Learning rate
+  epochs: 10  # Number of training epochs
   weight_decay: 0.01  # Weight decay for regularization
   batch_size: 1  # Batch size for training
   gpus: 1  # Number of GPUs
@@ -15,30 +15,33 @@ train:
   lr_step: 10  # Learning rate decay step (in epochs)
   lr_gamma: 0.1  # Learning rate decay factor
   k_values: [5, 10]  # Multimodal output values for trajectory prediction
+  lambda_lane: 1.0
 
 test:
   batch_size: 1  # Batch size for testing
   gpus: 1  # Number of GPUs for testing
-  data_root: /home/user/data/Nuscenes  # Root path for dataset
+  data_root: /home/user/data/kim_bh/Nuscenes  # Root path for dataset
   checkpoint: /home/user/Traj-LLM/imjaegyun/Traj-LLM/outputs/2025-01-08/01-58-51/Traj-LLM/2yau9l6p/checkpoints/epoch=99-step=4300.ckpt  # Path to checkpoint file
   output_file: predictions.json  # Output file for predictions
 
 modules:
   sparse_encoder:
     input_dim: 4  # Input dimension for sparse encoder
-    hidden_dim: 256  # Hidden dimension for sparse encoder
+    hidden_dim: 64  # Hidden dimension for sparse encoder
     output_dim: 128  # Output dimension for sparse encoder
 
   high_level_model:
     llm_model_name: meta-llama/Llama-3.2-3B  # Name of high-level model
     input_dim: 128  # Input dimension
-    hidden_dim: 256  # Hidden dimension
+    hidden_dim: 64  # Hidden dimension
     output_dim: 128  # Output dimension
+    use_lora: true  # LoRA 사용 여부
+    lora_rank: 8  # LoRA의 랭크
 
   lane_probability:
     agent_dim: 128  # Input dimension for agent features
     lane_dim: 128  # Input dimension for lane features
-    hidden_dim: 256  # Hidden dimension
+    hidden_dim: 64  # Hidden dimension
     num_lanes: 10  # Number of lanes
 
   laplace_decoder:
@@ -47,11 +50,11 @@ modules:
 
   mamba:
     input_dim: 128  # Input dimension for Mamba layer
-    hidden_dim: 256  # Hidden dimension
+    hidden_dim: 64  # Hidden dimension
     num_blocks: 3  # Number of Mamba blocks
 
 data:
-  nuscenes_path: /home/user/data/Nuscenes  # Path to NuScenes dataset
+  nuscenes_path: /home/user/data/kim_bh/Nuscenes  # Path to NuScenes dataset
   train_split: train  # Training split name
   val_split: val  # Validation split name
   test_split: test  # Test split name

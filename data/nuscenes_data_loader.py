@@ -5,15 +5,18 @@ import torch
 from torch.utils.data import Dataset
 from nuscenes.nuscenes import NuScenes
 from nuscenes.map_expansion.map_api import NuScenesMap
+import logging
+
+logger = logging.getLogger(__name__)
 
 class NuscenesDataset(Dataset):
     def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', target_length=240):
         """
         Args:
-            nuscenes_path (str): NuScenes 데이터셋이 위치한 폴더 경로
-            version (str): NuScenes 버전 (예: 'v1.0-trainval')
-            split (str): 'train' 또는 'val'
-            target_length (int): 예측하고자 하는 미래 프레임(샘플) 수
+            nuscenes_path (str): Path to the NuScenes dataset directory
+            version (str): NuScenes version (e.g., 'v1.0-trainval')
+            split (str): 'train' or 'val'
+            target_length (int): Number of future frames to predict
         """
         self.output_length = 6
         self.target_length = target_length
@@ -44,14 +47,20 @@ class NuscenesDataset(Dataset):
             agent_state = self._extract_agent_state(sample)
             lane_features = self._extract_lane_features(sample)
             trajectory_points = self._extract_trajectory_points(sample)
+            lane_labels = self._extract_lane_labels(sample)  # lane_labels 추가
+
+            # lane_features가 모두 0인 경우 배치 제외
+            if np.all(lane_features == 0):
+                raise ValueError("Invalid lane features. Skipping sample.")
 
             return {
                 'agent_features': torch.tensor(agent_state, dtype=torch.float32),
                 'lane_features': torch.tensor(lane_features, dtype=torch.float32),
                 'trajectory_points': torch.tensor(trajectory_points, dtype=torch.float32),
+                'lane_labels': torch.tensor(lane_labels, dtype=torch.long),  # lane_labels 포함
             }
         except Exception as e:
-            print(f"[ERROR] Failed to process sample {idx}: {e}. Returning default values.")
+            print(f"[ERROR] Failed to process sample {idx}: {e}. Skipping.")
             return self._get_default_sample()
 
     def _extract_lane_features(self, sample):
@@ -61,13 +70,12 @@ class NuscenesDataset(Dataset):
 
             ego_x, ego_y = ego_pose['translation'][0], ego_pose['translation'][1]
 
-            # NuScenesMap API를 사용하여 반경 30m 내 차선 검색
+            # NuScenesMap API를 사용하여 반경 50m 내 차선 검색
             lanes_in_radius = self.nusc_map.get_records_in_radius(
                 ego_x, ego_y, 50.0, ['lane']
             )
 
             if not lanes_in_radius['lane']:
-                #print(f"[DEBUG] No lanes found near ego position: {ego_pose['translation']}")
                 return np.zeros((self.target_length, 128))
 
             lane_features = []
@@ -92,6 +100,16 @@ class NuscenesDataset(Dataset):
         except Exception as e:
             print(f"[ERROR] Failed to extract lane features: {e}. Using zeros.")
             return np.zeros((self.target_length, 128))
+
+    def _extract_lane_labels(self, sample):
+        """
+        Extract lane labels for the current sample. Implement the logic based on your task.
+        This is a placeholder function.
+        """
+        # Placeholder implementation: 예시로 모든 lane_labels를 0으로 설정
+        # 실제로는 차선의 카테고리나 기타 정보를 기반으로 레이블을 설정해야 합니다.
+        lane_labels = np.zeros((self.target_length,), dtype=int)
+        return lane_labels
 
     def _extract_agent_state(self, sample):
         try:
@@ -174,4 +192,26 @@ class NuscenesDataset(Dataset):
             'agent_features': torch.zeros(self.output_length, 4, dtype=torch.float32),
             'lane_features': torch.zeros(self.target_length, 128, dtype=torch.float32),
             'trajectory_points': torch.zeros(self.target_length, 2, dtype=torch.float32),
+            'lane_labels': torch.zeros(self.target_length, dtype=torch.long),  # lane_labels 포함
         }
+
+class NuscenesDatasetFiltered(NuscenesDataset):
+    def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', target_length=240):
+        super().__init__(nuscenes_path=nuscenes_path, version=version, split=split, target_length=target_length)
+        original_length = len(self.scenes)
+        self.scenes = [scene for scene in self.scenes if self.is_valid(scene)]
+        filtered_length = len(self.scenes)
+        logger.info(f"Filtered dataset from {original_length} to {filtered_length} scenes.")
+
+    def is_valid(self, scene):
+        try:
+            first_sample_token = scene['first_sample_token']
+            sample = self.nusc.get('sample', first_sample_token)
+            lane_features = self._extract_lane_features(sample)
+            if np.all(lane_features == 0):
+                logger.error(f"Scene {scene['name']} has invalid lane features.")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Scene {scene['name']} failed validation: {e}")
+            return False
