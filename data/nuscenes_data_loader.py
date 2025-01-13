@@ -1,39 +1,45 @@
-# data/nuscenes_data_loader.py
+# data/Nuscenes_data_loader.py
+
 import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 from nuscenes.nuscenes import NuScenes
 from nuscenes.map_expansion.map_api import NuScenesMap
+from shapely.geometry import LineString, Point
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-class NuscenesDataset(Dataset):
-    def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', target_length=240):
-        """
-        Args:
-            nuscenes_path (str): Path to the NuScenes dataset directory
-            version (str): NuScenes version (e.g., 'v1.0-trainval')
-            split (str): 'train' or 'val'
-            target_length (int): Number of future frames to predict
-        """
-        self.output_length = 6
+class NuscenesDatasetFiltered(Dataset):
+    def __init__(self, nuscenes_path, version='v1.0-trainval',
+                 split='train', target_length=12, num_agents=6,
+                 num_lanes=6, radius_m=50.0):
+        super().__init__()
         self.target_length = target_length
-        self.nusc = NuScenes(version=version, dataroot=nuscenes_path, verbose=True)
-        self.nusc_map = NuScenesMap(dataroot=nuscenes_path, map_name="singapore-onenorth")
-        self.split = split
+        self.num_agents = num_agents
+        self.num_lanes = num_lanes
+        self.radius_m = radius_m
 
+        self.nusc = NuScenes(version=version, dataroot=nuscenes_path, verbose=True)
+        # Assuming map name is 'singapore-onenorth'
+        self.nusc_map = NuScenesMap(dataroot=nuscenes_path, map_name='singapore-onenorth')
+
+        self.split = split
         all_scenes = self.nusc.scene
-        train_split = set(range(0, int(0.8 * len(all_scenes))))
-        val_split = set(range(int(0.8 * len(all_scenes)), len(all_scenes)))
+        total_scenes = len(all_scenes)
+        train_split = set(range(0, int(0.8 * total_scenes)))
+        val_split   = set(range(int(0.8 * total_scenes), total_scenes))
 
         if split == 'train':
-            self.scenes = [scene for i, scene in enumerate(all_scenes) if i in train_split]
+            self.scenes = [s for i,s in enumerate(all_scenes) if i in train_split]
         elif split == 'val':
-            self.scenes = [scene for i, scene in enumerate(all_scenes) if i in val_split]
+            self.scenes = [s for i,s in enumerate(all_scenes) if i in val_split]
         else:
-            raise ValueError(f"Invalid split '{split}'. Choose 'train' or 'val'.")
+            raise ValueError(f"Invalid split={split}")
+
+        logger.info(f"[NuscenesDatasetFiltered] Creating dataset for '{split}' with {len(self.scenes)} scenes.")
 
     def __len__(self):
         return len(self.scenes)
@@ -44,174 +50,155 @@ class NuscenesDataset(Dataset):
         sample = self.nusc.get('sample', first_sample_token)
 
         try:
-            agent_state = self._extract_agent_state(sample)
-            lane_features = self._extract_lane_features(sample)
-            trajectory_points = self._extract_trajectory_points(sample)
-            lane_labels = self._extract_lane_labels(sample)  # lane_labels 추가
+            agent_features = self._extract_agent_state(sample)     # [num_agents,4]
+            lane_features  = self._extract_lane_features(sample)   # [num_lanes,4]
+            trajectory_pts = self._extract_trajectory_points(sample)# [target_length,2]
+            lane_labels    = self._extract_lane_labels(sample)      # [num_lanes]
 
-            # lane_features가 모두 0인 경우 배치 제외
-            if np.all(lane_features == 0):
-                raise ValueError("Invalid lane features. Skipping sample.")
+            ### DEBUG ###
+            # print(f"[DEBUG] sample={idx}, agent_features={agent_features.shape}, lane_features={lane_features.shape}, traj={trajectory_pts.shape}, lane_labels={lane_labels.shape}")
 
             return {
-                'agent_features': torch.tensor(agent_state, dtype=torch.float32),
-                'lane_features': torch.tensor(lane_features, dtype=torch.float32),
-                'trajectory_points': torch.tensor(trajectory_points, dtype=torch.float32),
-                'lane_labels': torch.tensor(lane_labels, dtype=torch.long),  # lane_labels 포함
+                'agent_features': torch.tensor(agent_features, dtype=torch.float32),
+                'lane_features':  torch.tensor(lane_features,  dtype=torch.float32),
+                'trajectory_points': torch.tensor(trajectory_pts, dtype=torch.float32),
+                'lane_labels': torch.tensor(lane_labels, dtype=torch.long)  # Added lane_labels
             }
         except Exception as e:
-            print(f"[ERROR] Failed to process sample {idx}: {e}. Skipping.")
-            return self._get_default_sample()
-
-    def _extract_lane_features(self, sample):
-        try:
-            sample_data = self.nusc.get('sample_data', sample['data']['LIDAR_TOP'])
-            ego_pose = self.nusc.get('ego_pose', sample_data['ego_pose_token'])
-
-            ego_x, ego_y = ego_pose['translation'][0], ego_pose['translation'][1]
-
-            # NuScenesMap API를 사용하여 반경 50m 내 차선 검색
-            lanes_in_radius = self.nusc_map.get_records_in_radius(
-                ego_x, ego_y, 50.0, ['lane']
-            )
-
-            if not lanes_in_radius['lane']:
-                return np.zeros((self.target_length, 128))
-
-            lane_features = []
-            for lane_token in lanes_in_radius['lane']:
-                lane_record = self.nusc_map.get('lane', lane_token)
-                width = lane_record.get('width', 0.0)
-                length = lane_record.get('length', 0.0)
-                lane_features.append([width, length])
-
-            lane_features = np.array(lane_features)
-
-            # (N, 2) -> 128차원으로 패딩. (실제론 더욱 복잡한 차원 추출 가능)
-            lane_features = np.pad(
-                lane_features,
-                ((0, max(0, self.target_length - lane_features.shape[0])), (0, 126)),
-                mode='constant'
-            )
-            lane_features = lane_features[:self.target_length, :128]
-
-            return lane_features
-
-        except Exception as e:
-            print(f"[ERROR] Failed to extract lane features: {e}. Using zeros.")
-            return np.zeros((self.target_length, 128))
-
-    def _extract_lane_labels(self, sample):
-        """
-        Extract lane labels for the current sample. Implement the logic based on your task.
-        This is a placeholder function.
-        """
-        # Placeholder implementation: 예시로 모든 lane_labels를 0으로 설정
-        # 실제로는 차선의 카테고리나 기타 정보를 기반으로 레이블을 설정해야 합니다.
-        lane_labels = np.zeros((self.target_length,), dtype=int)
-        return lane_labels
+            logger.error(f"[NuscenesDatasetFiltered] idx={idx}, error={e}. Return default.")
+            return self._default_item()
 
     def _extract_agent_state(self, sample):
-        try:
-            trajectory = []
-            velocity = []
+        """
+        agent_features: (num_agents=6, 4) = [x,y,vx,vy]
+        """
+        out_len = self.num_agents
+        feats = []
+        curr_sample = sample
+        for _ in range(out_len):
+            sd = self.nusc.get('sample_data', curr_sample['data']['LIDAR_TOP'])
+            pose = self.nusc.get('ego_pose', sd['ego_pose_token'])
+            x, y = pose['translation'][:2]
 
-            current_sample = sample
-            for _ in range(self.output_length):
-                sd_rec = self.nusc.get('sample_data', current_sample['data']['LIDAR_TOP'])
-                ego_pose = self.nusc.get('ego_pose', sd_rec['ego_pose_token'])
+            vx, vy = 0.0, 0.0
+            if curr_sample['next']:
+                nxt = self.nusc.get('sample', curr_sample['next'])
+                sd2 = self.nusc.get('sample_data', nxt['data']['LIDAR_TOP'])
+                pose2 = self.nusc.get('ego_pose', sd2['ego_pose_token'])
+                dt = (pose2['timestamp'] - pose['timestamp'])/1e6
+                if dt > 0:
+                    nx, ny = pose2['translation'][:2]
+                    vx = (nx - x)/dt
+                    vy = (ny - y)/dt
 
-                x, y = ego_pose['translation'][:2]
-                trajectory.append([x, y])
+            feats.append([x, y, vx, vy])
+            if curr_sample['next']:
+                curr_sample = self.nusc.get('sample', curr_sample['next'])
+            else:
+                break
 
-                if current_sample['next'] != "":
-                    next_sample = self.nusc.get('sample', current_sample['next'])
-                    next_sd_rec = self.nusc.get('sample_data', next_sample['data']['LIDAR_TOP'])
-                    next_pose = self.nusc.get('ego_pose', next_sd_rec['ego_pose_token'])
+        feats = np.array(feats)
+        if feats.shape[0] < out_len:
+            last = feats[-1].copy()
+            diff = out_len - feats.shape[0]
+            feats = np.concatenate([feats, np.tile(last, (diff, 1))], axis=0)
+        return feats
 
-                    dt = (next_pose['timestamp'] - ego_pose['timestamp']) / 1e6
-                    nx, ny = next_pose['translation'][:2]
-                    vx = (nx - x) / dt
-                    vy = (ny - y) / dt
-                else:
-                    vx, vy = 0.0, 0.0
+    def _extract_lane_features(self, sample):
+        """
+        lane_features: (num_lanes=6, 4) = [nx, ny, dx, dy]
+        """
+        sd = self.nusc.get('sample_data', sample['data']['LIDAR_TOP'])
+        pose = self.nusc.get('ego_pose', sd['ego_pose_token'])
+        ego_x, ego_y = pose['translation'][:2]
 
-                velocity.append([vx, vy])
+        recs = self.nusc_map.get_records_in_radius(ego_x, ego_y, self.radius_m, ['lane','lane_connector'])
+        lane_tokens = recs.get('lane',[]) + recs.get('lane_connector',[])
+        if len(lane_tokens) == 0:
+            return np.zeros((self.num_lanes,4), dtype=np.float32)
 
-                if current_sample['next'] != "":
-                    current_sample = self.nusc.get('sample', current_sample['next'])
-                else:
-                    break
+        lane_candidates = []
+        for lane_token in lane_tokens:
+            try:
+                centerline_pts = self.nusc_map.discretize_lane(lane_token, resolution_meters=1.0)
+                line_geom = LineString(centerline_pts)
+                p_ego = Point(ego_x, ego_y)
+                dist = line_geom.distance(p_ego)
+                nearest_pt = line_geom.interpolate(line_geom.project(p_ego))
+                nx, ny = nearest_pt.x, nearest_pt.y
 
-            trajectory = np.array(trajectory)
-            velocity = np.array(velocity)
+                s = line_geom.project(p_ego)
+                ds = 0.1
+                s_next = min(s + ds, line_geom.length)
+                next_pt = line_geom.interpolate(s_next)
+                dx, dy = (next_pt.x - nx), (next_pt.y - ny)
+                norm = max(1e-9, (dx**2 + dy**2)**0.5)
+                dx, dy = dx / norm, dy / norm
 
-            if len(trajectory) < self.output_length:
-                last_traj = trajectory[-1].copy()
-                last_vel = velocity[-1].copy()
-                diff = self.output_length - len(trajectory)
-                trajectory = np.concatenate([trajectory, np.tile(last_traj, (diff, 1))], axis=0)
-                velocity = np.concatenate([velocity, np.tile(last_vel, (diff, 1))], axis=0)
+                lane_candidates.append((dist, nx, ny, dx, dy))
+            except:
+                continue
 
-            agent_state = np.hstack((trajectory, velocity))  # (6, 4)
-            return agent_state
+        lane_candidates.sort(key=lambda x: x[0])
+        feats = []
+        for i in range(self.num_lanes):
+            if i < len(lane_candidates):
+                _, nx, ny, dx, dy = lane_candidates[i]
+                feats.append([nx, ny, dx, dy])
+            else:
+                feats.append([0, 0, 0, 0])
 
-        except Exception as e:
-            print(f"[ERROR] Failed to extract agent state: {e}. Using zeros.")
-            return np.zeros((self.output_length, 4))
+        return np.array(feats, dtype=np.float32)
 
     def _extract_trajectory_points(self, sample):
         """
-        실제 미래 궤적 (ego) 위치를 self.target_length 프레임만큼 추출.
+        traj_points: [target_length=12, 2] = (x, y)
         """
-        points = []
-        current_sample = sample
+        pts = []
+        cur = sample
         for _ in range(self.target_length):
-            sd_rec = self.nusc.get('sample_data', current_sample['data']['LIDAR_TOP'])
-            ego_pose = self.nusc.get('ego_pose', sd_rec['ego_pose_token'])
-
-            x, y = ego_pose['translation'][:2]
-            points.append([x, y])
-
-            if current_sample['next'] == "":
+            sd = self.nusc.get('sample_data', cur['data']['LIDAR_TOP'])
+            pose = self.nusc.get('ego_pose', sd['ego_pose_token'])
+            x, y = pose['translation'][:2]
+            pts.append([x, y])
+            if not cur['next']:
                 break
+            cur = self.nusc.get('sample', cur['next'])
+
+        pts = np.array(pts)
+        if pts.shape[0] < self.target_length:
+            last_xy = pts[-1].copy()
+            diff = self.target_length - pts.shape[0]
+            pts = np.concatenate([pts, np.tile(last_xy, (diff, 1))], axis=0)
+        return pts
+
+    def _extract_lane_labels(self, sample):
+        """
+        Extract lane labels from the sample.
+        The implementation depends on how lane labels are stored in your dataset.
+        """
+        # Example placeholder:
+        # Assume each sample has a list of lane indices or identifiers
+        # Modify this method based on your actual data structure
+        lane_tokens = sample.get('lane_tokens', None)
+        if lane_tokens is None:
+            # Assign default lane labels if not available
+            lane_labels = [0] * self.num_lanes
+        else:
+            # Convert lane_tokens to lane indices or class labels as needed
+            # Here, we assign unique indices for demonstration
+            lane_labels = [int(token[-4:], 16) % self.num_lanes for token in lane_tokens[:self.num_lanes]]
+            # Ensure lane_labels has exactly num_lanes elements
+            if len(lane_labels) < self.num_lanes:
+                lane_labels += [0] * (self.num_lanes - len(lane_labels))
             else:
-                current_sample = self.nusc.get('sample', current_sample['next'])
+                lane_labels = lane_labels[:self.num_lanes]
+        return lane_labels
 
-        # 부족하면 마지막 위치로 패딩
-        if len(points) < self.target_length:
-            last_xy = points[-1]
-            diff = self.target_length - len(points)
-            for _ in range(diff):
-                points.append(last_xy)
-
-        return np.array(points)
-
-    def _get_default_sample(self):
+    def _default_item(self):
         return {
-            'agent_features': torch.zeros(self.output_length, 4, dtype=torch.float32),
-            'lane_features': torch.zeros(self.target_length, 128, dtype=torch.float32),
-            'trajectory_points': torch.zeros(self.target_length, 2, dtype=torch.float32),
-            'lane_labels': torch.zeros(self.target_length, dtype=torch.long),  # lane_labels 포함
+            'agent_features': torch.zeros((self.num_agents,4), dtype=torch.float32),
+            'lane_features':  torch.zeros((self.num_lanes,4), dtype=torch.float32),
+            'trajectory_points': torch.zeros((self.target_length,2), dtype=torch.float32),
+            'lane_labels': torch.zeros((self.num_lanes,), dtype=torch.long)  # Default lane_labels
         }
-
-class NuscenesDatasetFiltered(NuscenesDataset):
-    def __init__(self, nuscenes_path, version='v1.0-trainval', split='train', target_length=240):
-        super().__init__(nuscenes_path=nuscenes_path, version=version, split=split, target_length=target_length)
-        original_length = len(self.scenes)
-        self.scenes = [scene for scene in self.scenes if self.is_valid(scene)]
-        filtered_length = len(self.scenes)
-        logger.info(f"Filtered dataset from {original_length} to {filtered_length} scenes.")
-
-    def is_valid(self, scene):
-        try:
-            first_sample_token = scene['first_sample_token']
-            sample = self.nusc.get('sample', first_sample_token)
-            lane_features = self._extract_lane_features(sample)
-            if np.all(lane_features == 0):
-                logger.error(f"Scene {scene['name']} has invalid lane features.")
-                return False
-            return True
-        except Exception as e:
-            logger.error(f"Scene {scene['name']} failed validation: {e}")
-            return False

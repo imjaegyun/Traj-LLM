@@ -1,4 +1,9 @@
 # train/train_model.py
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
@@ -12,258 +17,238 @@ from models.multimodal_laplace_decoder import MultimodalLaplaceDecoder
 from data.nuscenes_data_loader import NuscenesDatasetFiltered
 import hydra
 from omegaconf import DictConfig, OmegaConf
-from models.mamba import MambaLayer
-from torch.nn.utils.rnn import pad_sequence
 import logging
 
-# 설정 로깅 설정
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-def custom_collate(batch):
-    # 유효하지 않은 샘플(기본값)을 배제
-    batch = [item for item in batch if not torch.equal(item['agent_features'], torch.zeros_like(item['agent_features']))]
-    
-    if not batch:
-        # 모든 샘플이 유효하지 않은 경우 기본값 반환
-        return {
-            'agent_features': torch.zeros(0, 6, 4, dtype=torch.float32),
-            'lane_features': torch.zeros(0, 240, 128, dtype=torch.float32),
-            'trajectory_points': torch.zeros(0, 240, 2, dtype=torch.float32),
-            'lane_labels': torch.zeros(0, 240, dtype=torch.long),
-        }
-    
-    agent_features = [item['agent_features'] for item in batch]
-    lane_features = [item['lane_features'] for item in batch]
-    traj_points = [item['trajectory_points'] for item in batch]
-    lane_labels = [item['lane_labels'] for item in batch]
-    
-    # 시퀀스 길이 패딩 (필요 시)
-    traj_points_padded = pad_sequence(traj_points, batch_first=True, padding_value=0)
-    lane_labels_padded = pad_sequence(lane_labels, batch_first=True, padding_value=0)
-    
-    return {
-        'agent_features': torch.stack(agent_features),
-        'lane_features': torch.stack(lane_features),
-        'trajectory_points': traj_points_padded,
-        'lane_labels': lane_labels_padded,
-    }
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('[%(asctime)s][%(name)s][%(levelname)s] - %(message)s')
+handler.setFormatter(formatter)
+if not logger.handlers:
+    logger.addHandler(handler)
 
 class TrajLLM(pl.LightningModule):
     def __init__(self, config):
-        super(TrajLLM, self).__init__()
-
+        super().__init__()
         self.config = config
-        self.k_values = config.train.k_values
         self.learning_rate = config.train.lr
 
+        # Sparse Encoder
         self.sparse_encoder = SparseContextEncoder(
             input_dim=config.modules.sparse_encoder.input_dim,
             hidden_dim=config.modules.sparse_encoder.hidden_dim,
-            output_dim=config.modules.sparse_encoder.output_dim
+            output_dim=config.modules.sparse_encoder.output_dim,
+            num_heads=config.modules.fusion.num_heads,
+            num_layers=3
         )
 
-        if not hasattr(config.modules.high_level_model, "llm_model_name"):
-            raise ValueError("llm_model_name is missing in config.modules.high_level_model")
-
+        # High-level Model
         self.high_level_model = HighLevelInteractionModel(
             llm_model_name=config.modules.high_level_model.llm_model_name,
-            input_dim=config.modules.high_level_model.input_dim,
-            output_dim=config.modules.high_level_model.output_dim
+            input_dim=config.modules.sparse_encoder.output_dim,
+            output_dim=config.modules.high_level_model.output_dim,
+            use_lora=config.modules.high_level_model.use_lora,
+            lora_rank=config.modules.high_level_model.lora_rank,
+            num_heads=config.modules.fusion.num_heads
         )
 
-        self.lane_probability_model = LaneAwareProbabilityLearning(
-            agent_dim=config.modules.lane_probability.agent_dim,
-            lane_dim=config.modules.lane_probability.lane_dim,
-            hidden_dim=config.modules.lane_probability.hidden_dim,
-            num_lanes=config.modules.lane_probability.num_lanes
+        # Lane Probability
+        self.lane_aware_probability = LaneAwareProbabilityLearning(
+            input_dim=config.modules.lane_aware_probability.input_dim,
+            hidden_dim=config.modules.lane_aware_probability.hidden_dim,
+            num_lanes=config.modules.lane_aware_probability.num_lanes,
+            mamba_hidden_dim=128,
+            num_mamba_blocks=1,
+            dropout=0.1
         )
 
+        # Laplace Decoder
         self.laplace_decoder = MultimodalLaplaceDecoder(
-            input_dim=config.modules.laplace_decoder.input_dim,
-            output_dim=config.modules.laplace_decoder.output_dim
+            input_dim=config.modules.laplace_decoder.input_dim,  # Should be 6
+            output_dim=config.modules.laplace_decoder.output_dim,
+            num_modes=config.modules.laplace_decoder.num_modes
         )
 
-        self.mamba_layer = MambaLayer(
-            input_dim=config.modules.mamba.input_dim,
-            hidden_dim=config.modules.mamba.hidden_dim,
-            num_blocks=config.modules.mamba.num_blocks
-        ) if hasattr(config.modules, "mamba") else None
+        # Loss Functions
+        self.laplace_loss_fn = self.compute_laplace_loss
+        self.ce_loss_fn = nn.CrossEntropyLoss()
 
-        self.reset_parameters()
-        torch.set_float32_matmul_precision("medium")
         self.validation_outputs = []
-
-    def reset_parameters(self):
-        for module in self.modules():
-            if isinstance(module, nn.Linear):
-                nn.init.xavier_uniform_(module.weight)
-                if module.bias is not None:
-                    nn.init.zeros_(module.bias)
+        torch.set_float32_matmul_precision("medium")
 
     def forward(self, agent_inputs, lane_inputs):
-        device = agent_inputs.device
-        sparse_features = self.sparse_encoder(agent_inputs, lane_inputs)
-        high_level_features = self.high_level_model(sparse_features, device=device)
-        lane_probabilities, lane_predictions = self.lane_probability_model(high_level_features, lane_inputs)
-        if self.mamba_layer:
-            high_level_features = self.mamba_layer(high_level_features)
-        pi, mu, b, uncertainty = self.laplace_decoder(high_level_features, lane_probabilities)
-        return lane_probabilities, lane_predictions, pi, mu, b, uncertainty
+        """
+        agent_inputs: [B, N, 4]
+        lane_inputs : [B, L, 4]
+        """
+        # 1) Sparse Encoder => [B, N, 128]
+        sparse_features = self.sparse_encoder(agent_inputs)
+
+        # 2) High-level Model => [B, N+L, 3072]
+        device = sparse_features.device
+        high_level_features = self.high_level_model(sparse_features, device)
+
+        # 3) Lane Probability => pi_lane [B, N+L, 6]
+        pi_lane, lane_preds = self.lane_aware_probability(high_level_features)
+
+        # 4) Laplace Decoder => [pi_laplace, mu, b, uncertainty]
+        pi_laplace, mu, b, uncertainty = self.laplace_decoder(high_level_features, pi_lane)
+
+        return pi_laplace, mu, b, uncertainty, pi_lane
 
     def compute_laplace_loss(self, pi, mu, b, traj_points):
-        batch_size, seq_len, num_modes, _ = mu.size()
-        gt_expanded = traj_points.unsqueeze(2)
-        l2_distances = torch.norm(mu - gt_expanded, dim=-1)
-        k_star = torch.argmin(l2_distances, dim=-1, keepdim=True)
-        k_star_mask = torch.zeros_like(l2_distances).scatter_(-1, k_star, 1.0)
-        b = torch.clamp(b, min=1e-6)
-        laplace_density = -torch.abs(mu - gt_expanded) / b - torch.log(2 * b)
-        laplace_density = torch.sum(laplace_density, dim=-1)
-        weighted_density = pi + laplace_density
-        selected_density = torch.sum(weighted_density * k_star_mask, dim=-1)
-        reg_loss = -torch.mean(selected_density)
-        reg_loss = torch.clamp(reg_loss, min=0)
-        return reg_loss
+        """
+        Compute the Weighted Negative Log-Likelihood loss for the Laplace distribution.
+        """
+        epsilon = 1e-6
+        b = b + epsilon  # Ensure numerical stability
+
+        # Select the last timestep
+        pi_last = pi[:, -1, :]          # [B, num_modes]
+        mu_last = mu[:, -1, :, :]       # [B, num_modes, 2]
+        b_last  = b[:, -1, :, :]        # [B, num_modes, 2]
+
+        # Ground truth for the last timestep
+        final_gt = traj_points[:, -1, :]    # [B, 2]
+        targets = final_gt.unsqueeze(1).expand(-1, mu_last.size(1), -1)  # [B, num_modes, 2]
+
+        # Compute the Laplace log-likelihood
+        diff = torch.abs(mu_last - targets)
+        ll = torch.log(2 * b_last) + diff / b_last  # [B, num_modes, 2]
+
+        # Sum over the output dimensions (e.g., x and y)
+        ll_sum = ll.sum(dim=-1)  # [B, num_modes]
+
+        # Weighted loss using pi_last
+        weighted_loss = pi_last * ll_sum  # [B, num_modes]
+
+        # Compute the expectation instead of WTA
+        total_loss = weighted_loss.mean()
+
+        return total_loss
+
+    def _get_lane_labels(self, batch):
+        """
+        Extract lane labels from the batch.
+        This function needs to be implemented based on how lane labels are stored in your dataset.
+        """
+        lane_labels = batch.get('lane_labels', None)
+        if lane_labels is None:
+            raise ValueError("Lane labels are not available in the batch.")
+        return lane_labels
 
     def training_step(self, batch, batch_idx):
-        agent_inputs = batch['agent_features']
-        lane_inputs = batch['lane_features']
-        traj_points = batch.get('trajectory_points', None)
-        lane_labels = batch.get('lane_labels', None)
+        if batch is None:
+            return torch.tensor(0.0, device=self.device)
 
-        lane_probs, lane_preds, pi, mu, b, uncertainty = self(agent_inputs, lane_inputs)
+        agent_in = batch['agent_features']  # [B, N, 4]
+        lane_in  = batch['lane_features']   # [B, L, 4]
+        traj_pts = batch['trajectory_points']  # [B, target_length, 2]
 
-        reg_loss = torch.tensor(0.0, device=self.device)
-        if traj_points is not None and mu is not None and b is not None:
-            reg_loss = self.compute_laplace_loss(pi, mu, b, traj_points[:, :6, :])
+        # Forward pass
+        pi_laplace, mu, b, uncertainty, pi_lane = self(agent_in, lane_in)  # pi_lane: [B, N+L, 6]
 
-        cls_loss = torch.tensor(0.0, device=self.device)
-        if pi is not None:
-            cls_loss_fn = nn.CrossEntropyLoss()
-            cls_loss = cls_loss_fn(pi.view(-1, pi.size(-1)), torch.argmax(pi, dim=-1).view(-1))
+        # Compute lane labels
+        try:
+            lane_labels = self._get_lane_labels(batch)  # [B, L]
+        except ValueError as e:
+            logger.error(e)
+            return torch.tensor(0.0, device=self.device)
 
-        lane_loss = torch.tensor(0.0, device=self.device)
-        if lane_labels is not None:
-            lane_loss_fn = nn.CrossEntropyLoss()
-            lane_loss = lane_loss_fn(
-                lane_probs.view(-1, lane_probs.size(-1)),
-                lane_labels.view(-1)
-            )
+        # Compute losses
+        laplace_loss = self.laplace_loss_fn(pi_laplace, mu, b, traj_pts)
+        
+        # Extract lane-related probabilities
+        pi_lane_lanes = pi_lane[:, -self.config.modules.lane_aware_probability.num_lanes:, :]  # [B, L, 6]
 
-        lambda_lane = self.config.train.lambda_lane
-        total_loss = lambda_lane * lane_loss + reg_loss + cls_loss
+        # Compute cross-entropy loss using reshape instead of view
+        lane_loss = self.ce_loss_fn(
+            pi_lane_lanes.reshape(-1, self.config.modules.lane_aware_probability.num_lanes),  # [B*L, 6]
+            lane_labels.reshape(-1)  # [B*L]
+        )
 
-        logger.info(f"Training Step {batch_idx}: Total Loss = {total_loss.item()}, Lane Loss = {lane_loss.item()}, Reg Loss = {reg_loss.item()}, Cls Loss = {cls_loss.item()}")
+        # Combine losses
+        total_loss = laplace_loss + self.config.train.lambda_lane * lane_loss
 
-        self.log("train/lane_loss", lane_loss, on_step=True, on_epoch=True)
-        self.log("train/reg_loss", reg_loss, on_step=True, on_epoch=True)
-        self.log("train/cls_loss", cls_loss, on_step=True, on_epoch=True)
-        self.log("train/total_loss", total_loss, on_step=True, on_epoch=True)
+        # Check for NaNs or Infs
+        if torch.isnan(total_loss) or torch.isinf(total_loss):
+            logger.error(f"[Training Step] NaN/Inf in total_loss at batch_idx={batch_idx}")
+            return torch.tensor(0.0, device=self.device)
+
+        # Log losses separately
+        self.log("train/loss_step", total_loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("train/laplace_loss", laplace_loss, on_step=True, on_epoch=True, prog_bar=False)
+        self.log("train/lane_loss", lane_loss, on_step=True, on_epoch=True, prog_bar=False)
 
         return total_loss
+
 
     def validation_step(self, batch, batch_idx):
-        agent_inputs = batch['agent_features']
-        lane_inputs = batch['lane_features']
-        traj_points = batch.get('trajectory_points', None)
-        lane_labels = batch.get('lane_labels', None)
+        if batch is None:
+            return
 
-        lane_probs, lane_preds, pi, mu, b, uncertainty = self(agent_inputs, lane_inputs)
+        # Input data
+        agent_in = batch['agent_features']  # [B, N, 4]
+        lane_in = batch['lane_features']    # [B, L, 4]
+        traj_pts = batch['trajectory_points']  # [B, target_length, 2]
 
-        reg_loss = torch.tensor(0.0, device=self.device)
-        if traj_points is not None and mu is not None and b is not None:
-            reg_loss = self.compute_laplace_loss(pi, mu, b, traj_points[:, :6, :])
+        # Forward pass
+        pi_laplace, mu, b, uncertainty, pi_lane = self(agent_in, lane_in)
 
-        cls_loss = torch.tensor(0.0, device=self.device)
-        if pi is not None:
-            cls_loss_fn = nn.CrossEntropyLoss()
-            cls_loss = cls_loss_fn(pi.view(-1, pi.size(-1)), torch.argmax(pi, dim=-1).view(-1))
+        # Debug shapes
+        print(f"mu.shape: {mu.shape}, traj_pts.shape: {traj_pts.shape}")
 
-        lane_loss = torch.tensor(0.0, device=self.device)
-        if lane_labels is not None:
-            lane_loss_fn = nn.CrossEntropyLoss()
-            lane_loss = lane_loss_fn(
-                lane_probs.view(-1, lane_probs.size(-1)),
-                lane_labels.view(-1)
-            )
+        # Ensure mu's dimensions match expectations
+        batch_size, num_modes, T, spatial_dim = mu.shape  # [B, num_modes, T, 2]
+        _, target_length, _ = traj_pts.shape  # [B, target_length, 2]
 
-        lambda_lane = self.config.train.lambda_lane
-        total_loss = lambda_lane * lane_loss + reg_loss + cls_loss
+        # If time steps do not match, downsample traj_pts
+        if T != target_length:
+            print(f"Aligning traj_pts from {target_length} to {T} time steps.")
+            traj_pts = traj_pts[:, :T, :]  # Take the first T time steps
 
-        logger.info(f"Validation Step {batch_idx}: Total Loss = {total_loss.item()}, Lane Loss = {lane_loss.item()}, Reg Loss = {reg_loss.item()}, Cls Loss = {cls_loss.item()}")
+        # Expand traj_pts to match num_modes
+        gt_traj = traj_pts.unsqueeze(1).expand(-1, num_modes, -1, -1)  # [B, num_modes, T, 2]
 
-        self.validation_outputs.append({
-            "reg_loss": reg_loss,
-            "cls_loss": cls_loss,
-            "lane_loss": lane_loss,
-            "total_loss": total_loss,
-            "pi": pi,
-            "mu": mu,
-            "b": b,
-            "traj_points": traj_points
-        })
+        # Compute L2 distance (norm)
+        diff = torch.norm(mu - gt_traj, dim=-1)  # [B, num_modes, T]
+        minADE = diff.mean(dim=-1).min(dim=-1).values.mean().item()  # [B] -> scalar
+        minFDE = diff[:, :, -1].min(dim=-1).values.mean().item()  # [B] -> scalar
 
-        self.log("val/lane_loss", lane_loss, on_epoch=True)
-        self.log("val/reg_loss", reg_loss, on_epoch=True)
-        self.log("val/cls_loss", cls_loss, on_epoch=True)
-        self.log("val/total_loss", total_loss, on_epoch=True)
+        # Compute Miss Rate (MR)
+        threshold = 2.0  # Example: 2 meters
+        miss = (diff[:, :, -1].min(dim=-1).values > threshold).float()  # [B]
+        MR = miss.mean().item()
+
+        # Log metrics
+        self.log("val/minADE", minADE, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/minFDE", minFDE, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/MR", MR, on_step=False, on_epoch=True, prog_bar=True)
+
+        # Compute lane labels and losses
+        try:
+            lane_labels = self._get_lane_labels(batch)  # [B, L]
+        except ValueError as e:
+            logger.error(e)
+            return
+
+        # Compute Laplace and lane loss
+        laplace_loss = self.laplace_loss_fn(pi_laplace, mu, b, traj_pts)
+        pi_lane_lanes = pi_lane[:, -self.config.modules.lane_aware_probability.num_lanes:, :]  # [B, L, 6]
+
+        lane_loss = self.ce_loss_fn(
+            pi_lane_lanes.reshape(-1, self.config.modules.lane_aware_probability.num_lanes),  # [B*L, 6]
+            lane_labels.reshape(-1)  # [B*L]
+        )
+
+        # Total loss
+        total_loss = laplace_loss + self.config.train.lambda_lane * lane_loss
+        self.log("val/loss", total_loss, on_step=False, on_epoch=True, prog_bar=True)
 
         return total_loss
 
-    def on_validation_epoch_end(self):
-        if not self.validation_outputs:
-            logger.warning("No validation outputs to process.")
-            return
 
-        all_reg_loss = torch.stack([x['reg_loss'] for x in self.validation_outputs]).mean()
-        all_cls_loss = torch.stack([x['cls_loss'] for x in self.validation_outputs]).mean()
-        all_lane_loss = torch.stack([x['lane_loss'] for x in self.validation_outputs]).mean()
-        all_total_loss = torch.stack([x['total_loss'] for x in self.validation_outputs]).mean()
 
-        all_pi = torch.cat([x['pi'] for x in self.validation_outputs], dim=0)
-        all_mu = torch.cat([x['mu'] for x in self.validation_outputs], dim=0)
-        all_b = torch.cat([x['b'] for x in self.validation_outputs], dim=0)
-        all_traj_points = torch.cat([x['traj_points'] for x in self.validation_outputs], dim=0)
-
-        metrics = self._compute_metrics(all_mu, all_traj_points)
-        logger.info(f"Validation Metrics: minADE = {metrics['minADE']}, minFDE = {metrics['minFDE']}, MR = {metrics['MR']}")
-
-        self.log("val/minADE", metrics['minADE'], on_epoch=True)
-        self.log("val/minFDE", metrics['minFDE'], on_epoch=True)
-        self.log("val/MR", metrics['MR'], on_epoch=True)
-
-        self.validation_outputs.clear()
-
-    def _compute_metrics(self, predicted_trajs, gt_trajs):
-        # 시퀀스 길이 맞추기
-        seq_len_pred = predicted_trajs.size(1)
-        seq_len_gt = gt_trajs.size(1)
-
-        if seq_len_pred > seq_len_gt:
-            predicted_trajs = predicted_trajs[:, :seq_len_gt, :]
-            logger.warning(f"Predicted trajectories truncated from {seq_len_pred} to {seq_len_gt}.")
-        elif seq_len_pred < seq_len_gt:
-            gt_trajs = gt_trajs[:, :seq_len_pred, :]
-            logger.warning(f"Ground truth trajectories truncated from {seq_len_gt} to {seq_len_pred}.")
-
-        # 텐서 크기 로깅
-        logger.info(f"predicted_trajs shape: {predicted_trajs.shape}")
-        logger.info(f"gt_trajs shape: {gt_trajs.shape}")
-
-        # 크기 일치 확인
-        assert predicted_trajs.size() == gt_trajs.size(), f"Mismatch: {predicted_trajs.size()} vs {gt_trajs.size()}"
-
-        # minADE 계산
-        minADE = torch.mean(torch.min(torch.norm(predicted_trajs - gt_trajs.unsqueeze(2), dim=-1), dim=-1)[0]).item()
-
-        # minFDE 계산
-        minFDE = torch.mean(torch.norm(predicted_trajs[:, -1, :] - gt_trajs[:, -1, :], dim=-1)).item()
-
-        # MR 계산
-        MR = torch.mean((torch.norm(predicted_trajs[:, -1, :] - gt_trajs[:, -1, :], dim=-1) > 2.0).float()).item()
-
-        return {"minADE": minADE, "minFDE": minFDE, "MR": MR}
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
@@ -271,74 +256,96 @@ class TrajLLM(pl.LightningModule):
             lr=self.config.train.lr,
             weight_decay=self.config.train.weight_decay
         )
-        scheduler = torch.optim.lr_scheduler.StepLR(
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            step_size=self.config.train.lr_step,
-            gamma=self.config.train.lr_gamma
+            mode='min',
+            factor=self.config.train.lr_gamma,
+            patience=3,
+            verbose=True
         )
-        return [optimizer], [scheduler]
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        agent_inputs = batch['agent_features']
-        lane_inputs = batch['lane_features']
-        lane_probs, lane_preds, pi, mu, b, uncertainty = self(agent_inputs, lane_inputs)
-
         return {
-            "lane_probabilities": lane_probs.detach().cpu().numpy(),
-            "lane_predictions": lane_preds.detach().cpu().numpy(),
-            "pi": pi.detach().cpu().numpy(),
-            "mu": mu.detach().cpu().numpy(),
-            "b": b.detach().cpu().numpy(),
-            "uncertainty": uncertainty.detach().cpu().numpy()
+            'optimizer': optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'monitor': 'val/loss',
+                'interval': 'epoch',
+                'frequency': 1
+            }
         }
 
+    @staticmethod
+    def collate_fn(batch):
+        filtered_batch = [s for s in batch if s is not None]
+        if not filtered_batch:
+            return None
+        agent_feats = torch.stack([s['agent_features'] for s in filtered_batch])  # [B, N, 4]
+        lane_feats  = torch.stack([s['lane_features']  for s in filtered_batch])  # [B, L, 4]
+        traj_pts    = torch.stack([s['trajectory_points'] for s in filtered_batch])  # [B, target_length, 2]
+        lane_labels = torch.stack([s.get('lane_labels', torch.zeros(1, dtype=torch.long)) for s in filtered_batch])  # [B, L]
+        return {
+            'agent_features': agent_feats,
+            'lane_features': lane_feats,
+            'trajectory_points': traj_pts,
+            'lane_labels': lane_labels
+        }
+
+@hydra.main(version_base=None, config_path="config.yaml")
 def train_main(config: DictConfig):
+    logger.info("[train_main] Initializing TrajLLM model...")
+    logger.info("Final Config:")
+    logger.info(OmegaConf.to_yaml(config, sort_keys=False))
+
     wandb_logger = WandbLogger(
-        project=config.modules.wandb.project,
-        entity=config.modules.wandb.get("entity", None),
-        mode=config.modules.wandb.get("mode", "online")
+        project=config.wandb.project,
+        mode=config.wandb.get("mode", "online")
     )
 
     model = TrajLLM(config)
 
-    nuscenes_path = config.modules.data.nuscenes_path
-    train_dataset = NuscenesDatasetFiltered(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="train")
-    val_dataset = NuscenesDatasetFiltered(nuscenes_path=nuscenes_path, version="v1.0-trainval", split="val")
+    ds_train = NuscenesDatasetFiltered(
+        nuscenes_path=config.data.nuscenes_path,
+        version="v1.0-trainval",
+        split=config.data.train_split,
+        target_length=config.modules.data_loader.target_length,
+        num_agents=config.modules.data_loader.num_agents,
+        num_lanes=config.modules.data_loader.num_lanes
+    )
+    ds_val = NuscenesDatasetFiltered(
+        nuscenes_path=config.data.nuscenes_path,
+        version="v1.0-trainval",
+        split=config.data.val_split,
+        target_length=config.modules.data_loader.target_length,
+        num_agents=config.modules.data_loader.num_agents,
+        num_lanes=config.modules.data_loader.num_lanes
+    )
 
-    batch_size = config.train.batch_size
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
+    loader_train = DataLoader(
+        ds_train,
+        batch_size=config.train.batch_size,
         shuffle=True,
         num_workers=4,
-        collate_fn=custom_collate
+        collate_fn=TrajLLM.collate_fn
     )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
+    loader_val = DataLoader(
+        ds_val,
+        batch_size=config.train.batch_size,
         shuffle=False,
         num_workers=4,
-        collate_fn=custom_collate
+        collate_fn=TrajLLM.collate_fn
     )
 
     trainer = pl.Trainer(
         max_epochs=config.train.epochs,
-        accelerator='gpu',
-        devices=config.train.gpus,
         logger=wandb_logger,
+        accelerator='gpu' if torch.cuda.is_available() else 'cpu',
+        devices=config.train.gpus if torch.cuda.is_available() else None,
         gradient_clip_val=config.train.gradient_clip_val,
-        callbacks=[]  # 필요 시 콜백 추가
+        precision='16-mixed' if torch.cuda.is_available() else 32,
+        log_every_n_steps=10
     )
 
-    trainer.fit(model, train_loader, val_loader)
-
-@hydra.main(version_base="1.1",
-            config_path="/home/user/Traj-LLM/imjaegyun/Traj-LLM/configs",
-            config_name="config.yaml")
-def main(config: DictConfig):
-    logger.info("Starting training...")
-    logger.debug(f"Configuration:\n{OmegaConf.to_yaml(config)}")
-    train_main(config)
+    logger.info("[train_main] Starting trainer.fit()...")
+    trainer.fit(model, loader_train, loader_val)
 
 if __name__ == "__main__":
-    main()
+    train_main()
